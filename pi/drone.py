@@ -15,7 +15,7 @@ myID = "1"   # På andra Raspberry Pi: ändra till "2"
 # ================================
 # Database server address (Server Pi)
 # ================================
-SERVER = "http://192.168.0.11:5001/drone"   # ÄNDRA till er server-IP
+SERVER = "http://192.168.0.2:5001/drone"   # ÄNDRA till er server-IP
 
 # ================================
 # Get initial position
