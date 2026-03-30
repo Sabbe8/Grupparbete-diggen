@@ -1,29 +1,64 @@
 from flask import Flask, request
 import redis
 import json
+import requests
 
 app = Flask(__name__)
 
+# Koppla till Redis
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
-@app.route('/drone', methods=['POST'])
-def update_drone():
+
+# =========================================
+# Hitta en ledig drone
+# =========================================
+def get_available_drone():
+    keys = r.keys("drone:*")
+
+    for key in keys:
+        drone = json.loads(r.get(key))
+
+        print("Checking drone:", drone)
+
+        if drone["status"] == "idle":
+            return drone
+
+    return None
+
+
+# =========================================
+# Ta emot request från webben
+# =========================================
+@app.route('/request_drone', methods=['POST'])
+def request_drone():
 
     data = request.json
 
-    drone_id = data['id']
+    from_coords = data['from']
+    to_coords = data['to']
 
-    drone_info = {
-        "id": drone_id,
-        "longitude": data['longitude'],
-        "latitude": data['latitude'],
-        "status": data['status'],
-        "ip": request.remote_addr   # 🔥 viktigt!
-    }
+    drone = get_available_drone()
 
-    r.set(f"drone:{drone_id}", json.dumps(drone_info))
+    if not drone:
+        return "No available drone, try later"
 
-    return "OK"
+    ip = drone["ip"]
+
+    url = f"http://{ip}:5000/"
+
+    print(f"Sending mission to drone {drone['id']} at {ip}")
+
+    try:
+        requests.post(url, json={
+            "from": from_coords,
+            "to": to_coords
+        })
+    except Exception as e:
+        print("Error:", e)
+        return "Failed to send request"
+
+    return "Got address and sent request to the drone"
+
 
 if __name__ == '__main__':
-    app.run(port=5001)
+    app.run(port=5002)
