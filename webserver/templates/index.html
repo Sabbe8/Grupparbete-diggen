@@ -1,97 +1,110 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta charset="utf-8">
   <title>Drone in Lund</title>
-  <script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>
+  <script src="https://d3js.org/d3.v3.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>  
+
+  <!-- Form submit -->
   <script type="text/javascript">
     function Submit() {
       var from_addr = document.getElementById('faddr').value;
       var to_addr = document.getElementById('taddr').value;
-      var data = { "faddr": from_addr,
-                   "taddr": to_addr,
-                 }
-      var xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-          try{
-            var resp = this.responseText;
-            alert(resp);
-          }
-          catch(err){
-            alert(this.responseText);
-          }
+      var data = { "faddr": from_addr, "taddr": to_addr };
+      
+      $.ajax({
+        type: "POST",
+        url: "http://127.0.0.1:5002/planner", // er route_planner
+        data: JSON.stringify(data),
+        contentType: "application/json",
+        success: function(resp){
+          alert(resp);
+        },
+        error: function(err){
+          alert("Fel vid skickning: " + JSON.stringify(err));
         }
-      };
-      xhttp.open("POST", "http://127.0.0.1:5002/planner", true);
-      xhttp.send(JSON.stringify(data));
+      });
     }
   </script>
+
+  <!-- Lägg drönare på SVG -->
   <script type="text/javascript">
     function LoadDrone(droneID, x, y, status) {
-      var doc = document.getElementById("map");
-      $( doc ).ready(function() {
-      var doc_svg = doc.getSVGDocument();
-      var svg = doc_svg.getElementById("map-svg");
-      var circleNode = svg.getElementById(droneID);
-      var color = 'red';
-      if (status == 'idle'){
-        color = 'green'
-      }
-      if(circleNode == null){
-        circleNode = doc_svg.createElementNS("http://www.w3.org/2000/svg", "circle");
+      var svg = document.getElementById("map-svg");
+      if (!svg) return;
+
+      var circleNode = document.getElementById(droneID);
+      var color = (status === 'idle') ? 'green' : 'red';
+
+      if(circleNode === null){
+        circleNode = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         circleNode.setAttributeNS(null, 'cx', x);
         circleNode.setAttributeNS(null, 'cy', y);
         circleNode.setAttributeNS(null, 'r', '5');
         circleNode.setAttributeNS(null, 'fill', color);
         circleNode.setAttributeNS(null, 'id', droneID);
-        svg.appendChild(circleNode);  }
-      else{
+        svg.appendChild(circleNode);
+      } else {
         circleNode.setAttributeNS(null, 'cx', x);
         circleNode.setAttributeNS(null, 'cy', y);
         circleNode.setAttributeNS(null, 'fill', color);
       }
     }
-  )
-}
-  </script> 
+  </script>
 </head>
 
 <body>
-  <p>Current Position: </p>
-  <div id="txt"></div>
+  <h1>Drone Delivery Map</h1>
+
   <form action="javascript:Submit()">
-    <label for="fname">From address:</label><br>
+    <label for="faddr">From address:</label><br>
     <input type="text" id="faddr" name="faddr"><br>
-    <label for="lname">To address:</label><br>
+    <label for="taddr">To address:</label><br>
     <input type="text" id="taddr" name="taddr"><br><br>
-    <input type="submit" value="Search addresses">
+    <input type="submit" value="Send Drone">
   </form>
-  <object id="map" data="static/images/lund-map.svg" type="image/svg+xml" ></object>
-  <script>
-    var set_delay = 50,
-    callout = function () {
-    $.ajax({
-      url: 'http://0.0.0.0:5000/get_drones'
-    })
-    .done(function (server_response) {
-      var avalaible_drones = Object.keys(server_response)
-      for (const droneID of avalaible_drones){
-        var x = server_response[droneID].longitude
-        var y = server_response[droneID].latitude
-        var status = server_response[droneID].status
-        LoadDrone(droneID, x, y, status)
+
+  <!-- SVG-kartan -->
+  <object id="map" type="image/svg+xml" data="/static/images/lund-map.svg" width="800" height="600"></object>
+
+  <!-- Uppdatera drönare -->
+  <script type="text/javascript">
+    var set_delay = 100; // ms mellan uppdateringar
+
+    function updateDrones() {
+      $.ajax({
+        url: 'http://127.0.0.1:5000/get_drones',
+        dataType: 'json',
+        success: function(server_response){
+          for (const droneID in server_response){
+            var drone = server_response[droneID];
+            var x = drone.longitude;
+            var y = drone.latitude;
+            var status = drone.status;
+            // Lägg drönare på SVG
+            LoadDrone(droneID, x, y, status);
+          }
+        },
+        complete: function(){
+          setTimeout(updateDrones, set_delay);
+        },
+        error: function(err){
+          console.log("Kunde inte hämta drönare: ", err);
+          setTimeout(updateDrones, set_delay);
+        }
+      });
+    }
+
+    // Vänta tills SVG har laddats
+    document.getElementById("map").addEventListener("load", function() {
+      var svgDoc = document.getElementById("map").contentDocument;
+      if(svgDoc) {
+        var svg = svgDoc.documentElement;
+        svg.setAttribute("id", "map-svg"); // ge id så vi kan manipulera den
+        updateDrones();
       }
-    })
-    .always(function (server_response) {
-        setTimeout(callout, set_delay);
     });
-    };
-    callout();    
   </script>
-
-
 </body>
 </html>
