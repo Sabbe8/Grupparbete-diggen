@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Drone Order</title>
+</head>
+<body>
+    <h1>Välkommen {{ farmer }}</h1>
+    <p>Skicka drönaren till dina koordinater.</p>
+    <form method="post" action="/send_order/{{ farmer }}">
+        <input type="submit" value="Skicka drönare">
+    </form>
+    <p>Från: {{ coords.from }}</p>
+    <p>Till: {{ coords.to }}</p>
+</body>
+</html>
