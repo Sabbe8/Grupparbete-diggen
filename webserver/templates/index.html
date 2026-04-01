@@ -1,83 +1,71 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>TerraScan Drone Map</title>
-
-  <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- jQuery -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-  <style>
-    #map { height: 720px; width: 1200px; }
-  </style>
+  <meta charset="utf-8">
+  <title>TerraScan</title>
 </head>
 
 <body>
-  <h1>TerraScan Drone Map</h1>
-  <div id="map"></div>
+  <div id="map" style="height: 720px; width: 1200px;"></div>
 
   <script>
     // Skapa Leaflet-kartan
     var map = L.map('map').setView([55.81904, 13.42416], 15);
-
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      maxZoom: 19
     }).addTo(map);
 
-    // Håll koll på alla drönare
+    // Håll alla drönare i ett objekt
     var droneMarkers = {};
 
     function updateDrones() {
       $.ajax({
-        url: 'http://192.168.0.2:5000/get_drones', // Flask backend
+        // 🔥 ändra här till webserverns IP
+        url: 'http://192.168.0.2:5000/get_drones',
         dataType: 'json',
         success: function(data){
-          for (const droneID in data){
-            var drone = data[droneID];
 
-            // Leaflet vill ha [lat, lon]
+          for (const droneID in data){
+
+            var drone = data[droneID];
             var lat = parseFloat(drone.latitude);
             var lon = parseFloat(drone.longitude);
             var status = drone.status;
 
             var color = (status === "idle") ? "green" : "red";
 
+            // om drönare inte finns → skapa
             if (!droneMarkers[droneID]) {
-              // Skapa ny marker
               var marker = L.circleMarker([lat, lon], {
-                radius: 8,
+                radius: 8,   // kan justeras om ni vill större/synligare
                 color: color,
-                fillColor: color,
                 fillOpacity: 0.8
               }).addTo(map);
 
-              marker.bindPopup("Drone " + droneID + "<br>Status: " + status);
+              marker.bindPopup("Drone " + droneID);
               droneMarkers[droneID] = marker;
 
             } else {
-              // Uppdatera position och färg
+              // uppdatera position
               droneMarkers[droneID].setLatLng([lat, lon]);
-              droneMarkers[droneID].setStyle({color: color, fillColor: color});
-              droneMarkers[droneID].getPopup().setContent("Drone " + droneID + "<br>Status: " + status);
+              droneMarkers[droneID].setStyle({color: color});
             }
           }
         },
         complete: function(){
-          setTimeout(updateDrones, 100); // Uppdatera 10 ggr/s
+          setTimeout(updateDrones, 100); // uppdatera var 100 ms
         },
         error: function(err){
-          console.log("Kunde inte hämta drönare:", err);
+          console.log("Fel vid hämtning av drönare: ", err);
           setTimeout(updateDrones, 100);
         }
       });
     }
 
-    // Starta drönaruppdatering
     updateDrones();
   </script>
 </body>
