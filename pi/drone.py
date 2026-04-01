@@ -10,7 +10,7 @@ CORS(app, supports_credentials=True)
 # ================================
 # Unique ID for this drone
 # ================================
-myID = "1"   # På andra Raspberry Pi: ändra till "2"
+myID = "1"   # På andra Raspberry Pi: ändra till "2", osv.
 
 # ================================
 # Database server address (Server Pi)
@@ -24,10 +24,12 @@ if os.path.exists("current_location.txt"):
     with open("current_location.txt", "r") as f:
         line = f.readline().strip()
         current_longitude, current_latitude = line.split(",")
+        current_longitude = float(current_longitude)
+        current_latitude = float(current_latitude)
 else:
     # Default startposition (OSM coords)
-    current_longitude = "13.2005"
-    current_latitude = "55.7059"
+    current_longitude = 13.2005
+    current_latitude = 55.7059
     with open("current_location.txt", "w") as f:
         f.write(f"{current_longitude},{current_latitude}")
 
@@ -40,9 +42,7 @@ drone_info = {
     'latitude': current_latitude,
     'status': 'idle'
 }
-
 requests.post(SERVER, json=drone_info)
-
 
 # ================================
 # Receive delivery request
@@ -56,6 +56,8 @@ def main():
     with open("current_location.txt", "r") as f:
         line = f.readline().strip()
         current_longitude, current_latitude = line.split(",")
+        current_longitude = float(current_longitude)
+        current_latitude = float(current_latitude)
 
     from_coord = coords['from']
     to_coord = coords['to']
@@ -67,7 +69,6 @@ def main():
         'latitude': current_latitude,
         'status': 'busy'
     }
-
     requests.post(SERVER, json=drone_info)
 
     # Start simulator as background process
@@ -84,6 +85,6 @@ def main():
 
     return "New route received"
 
-
+# ================================
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
