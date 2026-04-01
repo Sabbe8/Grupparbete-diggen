@@ -86,7 +86,7 @@ if __name__ == "__main__":
     # ================================
     # Database server address
     # ================================
-    SERVER_URL = "http://192.168.0.10:5001/drone"   # ÄNDRA till er server-IP
+    SERVER_URL = "http://192.168.0.2:5001/drone"   # ÄNDRA till er server-IP
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--clong", type=float)
