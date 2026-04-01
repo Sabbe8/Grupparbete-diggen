@@ -16,54 +16,13 @@
   <div id="map" style="height: 720px; width: 1200px;"></div>
   
   <script>
-    var map = L.map('map').setView([50.130673, 36.224064], 9);
+    var map = L.map('map').setView([55.81904, 13.42416], 9);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
 
-    var field = L.icon({
-        iconUrl: 'static/images/field.png',
-
-        iconSize:     [40, 50], // size of the icon
-        iconAnchor:   [17.5, 25], // point of the icon which will correspond to marker's location
-        popupAnchor:  [0, -25] // point from which the popup should open relative to the iconAnchor
-    });
     
-    var hospital = L.icon({
-        iconUrl: 'static/images/hospital.png',
-
-        iconSize:     [40, 50], // size of the icon
-        iconAnchor:   [17.5, 25], // point of the icon which will correspond to marker's location
-        popupAnchor:  [0, -25] // point from which the popup should open relative to the iconAnchor
-    });
-
-    var drone = L.icon({
-        iconUrl: 'static/images/drone.png',
-
-        iconSize:     [40, 50], // size of the icon
-        iconAnchor:   [17.5, 25], // point of the icon which will correspond to marker's location
-        popupAnchor:  [0, -25] // point from which the popup should open relative to the iconAnchor
-    });
-    //L.marker([51.5, -0.09], {icon: greenIcon}).addTo(map);
-    var hospitalMarker = L.marker([49.97425, 36.1960665], {icon: hospital}).addTo(map);
-    var droneMarker = L.marker([50.10574, 36.01122], {icon: drone}).addTo(map);
-    var fieldMarker = L.marker([50.361825, 35.915570], {icon: field}).addTo(map);
-    var fieldMarker2 = L.marker([50.286543, 36.941948], {icon: field}).addTo(map);
-
-    //setLatLng(<LatLng> latlng);
-
-    hospitalMarker.bindPopup("<b>Charkiv hospital</b>");
-    droneMarker.bindPopup("<b>I'm a drone</b>");
-    fieldMarker.bindPopup("<b>Field hospital</b>");
-    fieldMarker2.bindPopup("<b>Field hospital</b>");
-
-    var circle = L.circle([49.97425, 36.1960665], {
-        color: 'red',
-        fillColor: '#f03',
-        fillOpacity: 0.2,
-        radius: 100000
-    }).addTo(map);
   </script>
 
 </body>
