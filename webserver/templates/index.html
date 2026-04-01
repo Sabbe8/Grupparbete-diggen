@@ -3,30 +3,8 @@
 <head>
   <meta charset="utf-8">
   <title>Drone in Lund</title>
-  <script src="https://d3js.org/d3.v3.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>  
 
-  <!-- Form submit -->
-  <script type="text/javascript">
-    function Submit() {
-      var from_addr = document.getElementById('faddr').value;
-      var to_addr = document.getElementById('taddr').value;
-      var data = { "faddr": from_addr, "taddr": to_addr };
-      
-      $.ajax({
-        type: "POST",
-        url: "http://127.0.0.1:5002/planner", // er route_planner
-        data: JSON.stringify(data),
-        contentType: "application/json",
-        success: function(resp){
-          alert(resp);
-        },
-        error: function(err){
-          alert("Fel vid skickning: " + JSON.stringify(err));
-        }
-      });
-    }
-  </script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>  
 
   <!-- Lägg drönare på SVG -->
   <script type="text/javascript">
@@ -57,20 +35,12 @@
 <body>
   <h1>Drone Delivery Map</h1>
 
-  <form action="javascript:Submit()">
-    <label for="faddr">From address:</label><br>
-    <input type="text" id="faddr" name="faddr"><br>
-    <label for="taddr">To address:</label><br>
-    <input type="text" id="taddr" name="taddr"><br><br>
-    <input type="submit" value="Send Drone">
-  </form>
-
-  <!-- SVG-kartan -->
+  <!-- 🗺️ Bara kartan -->
   <object id="map" type="image/svg+xml" data="/static/images/lund-map.svg" width="800" height="600"></object>
 
-  <!-- Uppdatera drönare -->
+  <!-- 🚁 Uppdatera drönare -->
   <script type="text/javascript">
-    var set_delay = 100; // ms mellan uppdateringar
+    var set_delay = 100;
 
     function updateDrones() {
       $.ajax({
@@ -79,10 +49,11 @@
         success: function(server_response){
           for (const droneID in server_response){
             var drone = server_response[droneID];
+
             var x = drone.longitude;
             var y = drone.latitude;
             var status = drone.status;
-            // Lägg drönare på SVG
+
             LoadDrone(droneID, x, y, status);
           }
         },
@@ -90,21 +61,24 @@
           setTimeout(updateDrones, set_delay);
         },
         error: function(err){
-          console.log("Kunde inte hämta drönare: ", err);
+          console.log("Kunde inte hämta drönare:", err);
           setTimeout(updateDrones, set_delay);
         }
       });
     }
 
-    // Vänta tills SVG har laddats
+    // Vänta på att SVG laddas
     document.getElementById("map").addEventListener("load", function() {
       var svgDoc = document.getElementById("map").contentDocument;
+
       if(svgDoc) {
         var svg = svgDoc.documentElement;
-        svg.setAttribute("id", "map-svg"); // ge id så vi kan manipulera den
-        updateDrones();
+        svg.setAttribute("id", "map-svg");
+
+        updateDrones(); // starta loop
       }
     });
   </script>
+
 </body>
 </html>
