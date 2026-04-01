@@ -1,83 +1,69 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta charset="utf-8">
-  <title>Drone in Lund</title>
-
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>  
-
-  <!-- Lägg drönare på SVG -->
-  <script type="text/javascript">
-    function LoadDrone(droneID, 200, 200, status) {
-      var svg = document.getElementById("map-svg");
-      if (!svg) return;
-
-      var circleNode = document.getElementById(droneID);
-      var color = (status === 'idle') ? 'green' : 'red';
-
-      if(circleNode === null){
-        circleNode = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circleNode.setAttributeNS(null, 'cx', x);
-        circleNode.setAttributeNS(null, 'cy', y);
-        circleNode.setAttributeNS(null, 'r', '5');
-        circleNode.setAttributeNS(null, 'fill', color);
-        circleNode.setAttributeNS(null, 'id', droneID);
-        svg.appendChild(circleNode);
-      } else {
-        circleNode.setAttributeNS(null, 'cx', x);
-        circleNode.setAttributeNS(null, 'cy', y);
-        circleNode.setAttributeNS(null, 'fill', color);
-      }
-    }
-  </script>
+  <title>Drone in ukraine</title>
 </head>
 
 <body>
-  <h1>Drone Delivery Map</h1>
+  <div id="map" style="height: 720px; width: 1200px;"></div>
+  
+  <script>
+    var map = L.map('map').setView([50.130673, 36.224064], 9);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
 
-  <!-- 🗺️ Bara kartan -->
-  <object id="map" type="image/svg+xml" data="/static/images/lund-map.svg" width="800" height="600"></object>
+    var field = L.icon({
+        iconUrl: 'static/images/field.png',
 
-  <!-- 🚁 Uppdatera drönare -->
-  <script type="text/javascript">
-    var set_delay = 100;
-
-    function updateDrones() {
-      $.ajax({
-        url: 'http://127.0.0.1:5000/get_drones',
-        dataType: 'json',
-        success: function(server_response){
-          for (const droneID in server_response){
-            var drone = server_response[droneID];
-
-            var x = drone.longitude;
-            var y = drone.latitude;
-            var status = drone.status;
-
-            LoadDrone(droneID, x, y, status);
-          }
-        },
-        complete: function(){
-          setTimeout(updateDrones, set_delay);
-        },
-        error: function(err){
-          console.log("Kunde inte hämta drönare:", err);
-          setTimeout(updateDrones, set_delay);
-        }
-      });
-    }
-
-    // Vänta på att SVG laddas
-    document.getElementById("map").addEventListener("load", function() {
-      var svgDoc = document.getElementById("map").contentDocument;
-
-      if(svgDoc) {
-        var svg = svgDoc.documentElement;
-        svg.setAttribute("id", "map-svg");
-
-        updateDrones(); // starta loop
-      }
+        iconSize:     [40, 50], // size of the icon
+        iconAnchor:   [17.5, 25], // point of the icon which will correspond to marker's location
+        popupAnchor:  [0, -25] // point from which the popup should open relative to the iconAnchor
     });
+    
+    var hospital = L.icon({
+        iconUrl: 'static/images/hospital.png',
+
+        iconSize:     [40, 50], // size of the icon
+        iconAnchor:   [17.5, 25], // point of the icon which will correspond to marker's location
+        popupAnchor:  [0, -25] // point from which the popup should open relative to the iconAnchor
+    });
+
+    var drone = L.icon({
+        iconUrl: 'static/images/drone.png',
+
+        iconSize:     [40, 50], // size of the icon
+        iconAnchor:   [17.5, 25], // point of the icon which will correspond to marker's location
+        popupAnchor:  [0, -25] // point from which the popup should open relative to the iconAnchor
+    });
+    //L.marker([51.5, -0.09], {icon: greenIcon}).addTo(map);
+    var hospitalMarker = L.marker([49.97425, 36.1960665], {icon: hospital}).addTo(map);
+    var droneMarker = L.marker([50.10574, 36.01122], {icon: drone}).addTo(map);
+    var fieldMarker = L.marker([50.361825, 35.915570], {icon: field}).addTo(map);
+    var fieldMarker2 = L.marker([50.286543, 36.941948], {icon: field}).addTo(map);
+
+    //setLatLng(<LatLng> latlng);
+
+    hospitalMarker.bindPopup("<b>Charkiv hospital</b>");
+    droneMarker.bindPopup("<b>I'm a drone</b>");
+    fieldMarker.bindPopup("<b>Field hospital</b>");
+    fieldMarker2.bindPopup("<b>Field hospital</b>");
+
+    var circle = L.circle([49.97425, 36.1960665], {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.2,
+        radius: 100000
+    }).addTo(map);
   </script>
 
 </body>
