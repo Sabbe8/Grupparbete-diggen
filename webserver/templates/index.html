@@ -34,7 +34,7 @@
 
     function updateDrones() {
       $.ajax({
-        url: 'http://127.0.0.1:5000/get_drones', // Flask backend
+        url: 'http://192.168.0.2:5000/get_drones', // Flask backend
         dataType: 'json',
         success: function(data){
           for (const droneID in data){
