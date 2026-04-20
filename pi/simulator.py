@@ -4,7 +4,7 @@ import argparse
 import time
 
 def getMovement(src, dst):
-    speed = 0.0002
+    speed = 0.00005
     dst_x, dst_y = dst
     x, y = src
     direction = math.sqrt((dst_x - x)**2 + (dst_y - y)**2)
