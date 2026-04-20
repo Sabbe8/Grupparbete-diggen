@@ -21,6 +21,7 @@ def moveDrone(src, d_long, d_la):
     x, y = src
     x = x + d_long
     y = y + d_la
+    print(x, y)
     return (x, y)
 
 
