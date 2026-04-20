@@ -25,20 +25,20 @@ def moveDrone(src, d_long, d_la):
     return (x, y)
 
 
-# =========================================
-# Create circle path
-# =========================================
+# ================================
+# Circle path
+# ================================
 def circleDrone(center, radius, steps):
     cx, cy = center
-    positions = []
+    points = []
 
     for i in range(steps):
         angle = 2 * math.pi * i / steps
         x = cx + radius * math.cos(angle)
         y = cy + radius * math.sin(angle)
-        positions.append((x, y))
+        points.append((x, y))
 
-    return positions
+    return points
 
 
 def run(id, current_coords, from_coords, to_coords, SERVER_URL):
@@ -46,9 +46,9 @@ def run(id, current_coords, from_coords, to_coords, SERVER_URL):
     start_coords = current_coords
     drone_coords = current_coords
 
-    # =========================================
-    # Flyg till farmer
-    # =========================================
+    # ================================
+    # Flyg till destination (farmer)
+    # ================================
     while math.dist(drone_coords, from_coords) > 0.00005:
 
         d_long, d_la = getMovement(drone_coords, from_coords)
@@ -58,14 +58,14 @@ def run(id, current_coords, from_coords, to_coords, SERVER_URL):
             'id': id,
             'longitude': drone_coords[0],
             'latitude': drone_coords[1],
-            'status': 'busy'
+            'status': 'flying'
         })
 
         time.sleep(0.1)
 
-    # =========================================
-    # Flyg i cirkel
-    # =========================================
+    # ================================
+    # GÖR CIRKEL VID FARMER
+    # ================================
     circle_points = circleDrone(from_coords, 0.0003, 40)
 
     for point in circle_points:
@@ -84,9 +84,9 @@ def run(id, current_coords, from_coords, to_coords, SERVER_URL):
 
             time.sleep(0.1)
 
-    # =========================================
-    # Return to start
-    # =========================================
+    # ================================
+    # FLYG TILLBAKA TILL START
+    # ================================
     while math.dist(drone_coords, start_coords) > 0.00005:
 
         d_long, d_la = getMovement(drone_coords, start_coords)
@@ -101,9 +101,9 @@ def run(id, current_coords, from_coords, to_coords, SERVER_URL):
 
         time.sleep(0.1)
 
-    # =========================================
-    # Done
-    # =========================================
+    # ================================
+    # KLAR
+    # ================================
     requests.post(SERVER_URL, json={
         'id': id,
         'longitude': drone_coords[0],
@@ -141,6 +141,5 @@ if __name__ == "__main__":
         SERVER_URL
     )
 
-    # Save final position
     with open("current_location.txt", "w") as f:
         f.write(f"{drone_long},{drone_lat}")
