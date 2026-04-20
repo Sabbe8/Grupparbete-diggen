@@ -55,6 +55,10 @@ def send_order(farmer):
 
     coords = FARMERS[farmer]
 
+    print("FARMER:", farmer)
+    print("FROM:", coords["from"])
+    print("TO:", coords["to"])
+
     send_mission(coords["from"], coords["to"])
 
     # Gå till karta efter klick
