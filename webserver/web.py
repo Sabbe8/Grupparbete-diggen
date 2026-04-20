@@ -8,15 +8,15 @@ app = Flask(__name__)
 # ================================
 # Redis (databasen från era drönare)
 # ================================
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+r = redis.Redis(host='localhost', port=6379, decode_responses=True) 
 
 # ================================
 # Farmers (login + coords)
 # ================================
 FARMERS = {
-    "anna": {"password": "pass123", "from": (55.81904, 13.42416), "to": (55.82013, 13.42103)},
-    "erik": {"password": "erikpwd", "from": (55.81904, 13.42416), "to": (13.2200, 55.7200)},
-    "lisa": {"password": "lisapwd", "from": (55.81904, 13.42416), "to": (13.2300, 55.7300)}
+    "anna": {"password": "pass123", "from": (13.42416, 55.81904), "to": (13.42103, 55.82013)},
+    "erik": {"password": "erikpwd", "from": (13.42416, 55.81904), "to": (13.2200, 55.7200)},
+    "lisa": {"password": "lisapwd", "from": (13.42416, 55.81904), "to": (13.2300, 55.7300)}
 }
 
 # ================================
