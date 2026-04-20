@@ -5,7 +5,7 @@ import time
 
 
 def getMovement(src, dst):
-    speed = 0.00005
+    speed = 0.00002
     dst_x, dst_y = dst
     x, y = src
     direction = math.sqrt((dst_x - x)**2 + (dst_y - y)**2)
@@ -22,24 +22,7 @@ def moveDrone(src, d_long, d_la):
     x, y = src
     x = x + d_long
     y = y + d_la
-    print(y, x)
     return (x, y)
-
-
-# ================================
-# Circle path
-# ================================
-def circleDrone(center, radius, steps):
-    cx, cy = center
-    points = []
-
-    for i in range(steps):
-        angle = 2 * math.pi * i / steps
-        x = cx + radius * math.cos(angle)
-        y = cy + radius * math.sin(angle)
-        points.append((x, y))
-
-    return points
 
 
 def run(id, current_coords, from_coords, to_coords, SERVER_URL):
@@ -48,7 +31,7 @@ def run(id, current_coords, from_coords, to_coords, SERVER_URL):
     drone_coords = current_coords
 
     # ================================
-    # Flyg till destination (farmer)
+    # Flyg till farmer
     # ================================
     while math.dist(drone_coords, from_coords) > 0.00005:
 
@@ -65,28 +48,7 @@ def run(id, current_coords, from_coords, to_coords, SERVER_URL):
         time.sleep(0.1)
 
     # ================================
-    # GÖR CIRKEL VID FARMER
-    # ================================
-    circle_points = circleDrone(from_coords, 0.0003, 40)
-
-    for point in circle_points:
-
-        while math.dist(drone_coords, point) > 0.00005:
-
-            d_long, d_la = getMovement(drone_coords, point)
-            drone_coords = moveDrone(drone_coords, d_long, d_la)
-
-            requests.post(SERVER_URL, json={
-                'id': id,
-                'longitude': drone_coords[0],
-                'latitude': drone_coords[1],
-                'status': 'scanning'
-            })
-
-            time.sleep(0.1)
-
-    # ================================
-    # FLYG TILLBAKA TILL START
+    # Flyg tillbaka till start
     # ================================
     while math.dist(drone_coords, start_coords) > 0.00005:
 
@@ -103,7 +65,7 @@ def run(id, current_coords, from_coords, to_coords, SERVER_URL):
         time.sleep(0.1)
 
     # ================================
-    # KLAR
+    # Klar
     # ================================
     requests.post(SERVER_URL, json={
         'id': id,
