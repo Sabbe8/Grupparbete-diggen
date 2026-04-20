@@ -4,7 +4,7 @@ import argparse
 import time
 
 def getMovement(src, dst):
-    speed = 0.0001
+    speed = 0.0002
     dst_x, dst_y = dst
     x, y = src
     direction = math.sqrt((dst_x - x)**2 + (dst_y - y)**2)
@@ -32,7 +32,7 @@ def run(id, current_coords, from_coords, to_coords, SERVER_URL):
     # ================================
     # Move to pickup location
     # ================================
-    while math.dist(drone_coords, from_coords) > 0.0001:
+    while math.dist(drone_coords, from_coords) > 0.0005:
 
         d_long, d_la = getMovement(drone_coords, from_coords)
 
@@ -51,7 +51,7 @@ def run(id, current_coords, from_coords, to_coords, SERVER_URL):
     # ================================
     # Move to delivery location
     # ================================
-    while math.dist(drone_coords, to_coords) > 0.0001:
+    while math.dist(drone_coords, to_coords) > 0.0005:
 
         d_long, d_la = getMovement(drone_coords, to_coords)
 
