@@ -2,26 +2,26 @@ from flask import Flask, request, render_template, redirect, url_for
 from controller import send_mission
 import redis
 import json
+import threading   # 🔥 NY
 
 app = Flask(__name__)
 
 # ================================
-# Redis (databasen från era drönare)
+# Redis
 # ================================
-r = redis.Redis(host='localhost', port=6379, decode_responses=True) 
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 # ================================
-# Farmers (login + coords)
+# Farmers
 # ================================
 FARMERS = {
     "anna": {"password": "pass123", "from": (13.42416, 55.81904), "to": (13.4114, 55.8252)},
-    "erik": {"password": "erikpwd", "from": (13.42416, 55.81904), "to": (13.2200, 55.7200)},
-    "lisa": {"password": "lisapwd", "from": (13.42416, 55.81904), "to": (13.2300, 55.7300)}
-
+    "erik": {"password": "erikpwd", "from": (13.42416, 55.81904), "to": (13.4200, 55.8300)},
+    "lisa": {"password": "lisapwd", "from": (13.42416, 55.81904), "to": (13.4300, 55.8100)}
 }
 
 # ================================
-# 🔐 LOGIN
+# LOGIN
 # ================================
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -40,7 +40,7 @@ def login():
 
 
 # ================================
-# 📦 ORDER-SIDA
+# ORDER PAGE
 # ================================
 @app.route('/order/<farmer>')
 def order_page(farmer):
@@ -48,7 +48,7 @@ def order_page(farmer):
 
 
 # ================================
-# 🚁 SKICKA DRÖNARE
+# SEND ORDER (FIXAD)
 # ================================
 @app.route('/send_order/<farmer>', methods=['POST'])
 def send_order(farmer):
@@ -59,14 +59,17 @@ def send_order(farmer):
     print("FROM:", coords["from"])
     print("TO:", coords["to"])
 
-    send_mission(coords["from"], coords["to"])
+    # 🔥 Kör i bakgrunden (snabb redirect)
+    threading.Thread(
+        target=send_mission,
+        args=(coords["from"], coords["to"])
+    ).start()
 
-    # Gå till karta efter klick
     return redirect(url_for('map_page'))
 
 
 # ================================
-# 🗺️ KARTA (index.html)
+# MAP
 # ================================
 @app.route('/map')
 def map_page():
@@ -74,7 +77,7 @@ def map_page():
 
 
 # ================================
-# 🔥 VIKTIG: skicka drönare till frontend
+# GET DRONES
 # ================================
 @app.route('/get_drones')
 def get_drones():
