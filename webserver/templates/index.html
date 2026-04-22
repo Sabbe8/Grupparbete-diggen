@@ -1,155 +1,97 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Drone Map</title>
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
+  <meta charset="utf-8">
+  <title>TerraScan</title>
+
   <style>
     body {
       margin: 0;
-      font-family: Helvetica;
-      background: #eaf5ee;
-    }
-
-    .header {
-      background: linear-gradient(90deg, #1f7a4d, #2ecc71);
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    .wrapper {
-      display: flex;
-      height: calc(100vh - 60px);
+      background: #eaf5ee; /* ljus grön bakgrund */
+      font-family: Arial;
     }
 
     #map {
-      flex: 3;
-      height: 100%;
-    }
-
-    .sidebar {
-      flex: 1;
-      background: white;
-      padding: 20px;
-      border-left: 4px solid #2ecc71;
-      box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-    }
-
-    .card {
-      background: #f5fbf7;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      border-left: 4px solid #2ecc71;
-    }
-
-    .status {
-      font-size: 14px;
-      color: #333;
-    }
-
-    .green {
-      color: #27ae60;
-      font-weight: bold;
-    }
-
-    .red {
-      color: #e74c3c;
-      font-weight: bold;
+      height: 720px;
+      width: 1200px;
+      margin: 20px auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      border: 3px solid #2ecc71;
     }
   </style>
 </head>
 
 <body>
 
-<div class="header">
-  🚁 Drone Live Map
-</div>
-
-<div class="wrapper">
-
-  <!-- MAP -->
   <div id="map"></div>
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <h3>📡 Drone Status</h3>
+  <script>
+    // Skapa Leaflet-kartan
+    var map = L.map('map').setView([55.81904, 13.42416], 15);
 
-    <div class="card">
-      <div><b>System status</b></div>
-      <div class="status">Running ✔</div>
-    </div>
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
 
-    <div class="card">
-      <div><b>Active drones</b></div>
-      <div id="droneCount">Loading...</div>
-    </div>
+    // Drönare
+    var droneMarkers = {};
 
-    <div class="card">
-      <div><b>Latest update</b></div>
-      <div class="status" id="lastUpdate">-</div>
-    </div>
-  </div>
+    function updateDrones() {
+      $.ajax({
+        url: 'http://localhost:5000/get_drones',
+        dataType: 'json',
+        success: function(data){
 
-</div>
+          for (const droneID in data){
 
-<script>
-  var map = L.map('map').setView([55.81904, 13.42416], 15);
+            var drone = data[droneID];
 
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+            var lat = parseFloat(drone.latitude);
+            var lon = parseFloat(drone.longitude);
+            var status = drone.status;
 
-  var droneMarkers = {};
+            // 🌿 grön = idle, röd = busy
+            var color = (status === "idle") ? "#2ecc71" : "#e74c3c";
 
-  function updateDrones() {
-    $.ajax({
-      url: 'http://127.0.0.1:5000/get_drones',
-      dataType: 'json',
-      success: function(data){
+            if (!droneMarkers[droneID]) {
 
-        let count = 0;
+              var marker = L.circleMarker([lat, lon], {
+                radius: 9,
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.9,
+                weight: 2
+              }).addTo(map);
 
-        for (const id in data) {
-          count++;
+              marker.bindPopup("Drone " + droneID);
+              droneMarkers[droneID] = marker;
 
-          var d = data[id];
-
-          var lat = d.latitude;
-          var lon = d.longitude;
-          var status = d.status;
-
-          var color = (status === "idle") ? "#2ecc71" : "#e74c3c";
-
-          if (!droneMarkers[id]) {
-            droneMarkers[id] = L.circleMarker([lat, lon], {
-              radius: 8,
-              color: color
-            }).addTo(map);
-          } else {
-            droneMarkers[id].setLatLng([lat, lon]);
-            droneMarkers[id].setStyle({color: color});
+            } else {
+              droneMarkers[droneID].setLatLng([lat, lon]);
+              droneMarkers[droneID].setStyle({
+                color: color,
+                fillColor: color
+              });
+            }
           }
+        },
+        complete: function(){
+          setTimeout(updateDrones, 100);
+        },
+        error: function(err){
+          console.log("Fel vid hämtning av drönare: ", err);
+          setTimeout(updateDrones, 100);
         }
+      });
+    }
 
-        document.getElementById("droneCount").innerText = count;
-        document.getElementById("lastUpdate").innerText = new Date().toLocaleTimeString();
-      },
-      complete: function(){
-        setTimeout(updateDrones, 1000);
-      }
-    });
-  }
-
-  updateDrones();
-</script>
+    updateDrones();
+  </script>
 
 </body>
 </html>
