@@ -8,90 +8,86 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
 # ================================
-# Unique ID for this drone
+# Drone ID
 # ================================
-myID = "1"   # På andra Raspberry Pi: ändra till "2"
-myID = "1"   # På andra Raspberry Pi: ändra till "2", osv.
+myID = "1"   # ändra till "2" på andra Raspberry Pi
 
 # ================================
-# Database server address (Server Pi)
+# Database server (ändra IP vid behov)
 # ================================
-SERVER = "http://192.168.0.2:5001/drone"   # ÄNDRA till er server-IP
+SERVER = "http://localhost:5001/drone"
 
 # ================================
-# Get initial position
+# Start position
 # ================================
 if os.path.exists("current_location.txt"):
-with open("current_location.txt", "r") as f:
-line = f.readline().strip()
-current_longitude, current_latitude = line.split(",")
+    with open("current_location.txt", "r") as f:
+        line = f.readline().strip()
+        current_longitude, current_latitude = line.split(",")
         current_longitude = float(current_longitude)
         current_latitude = float(current_latitude)
 else:
-# Default startposition (OSM coords)
-    current_longitude = "13.2005"
-    current_latitude = "55.7059"
     current_longitude = 13.2005
     current_latitude = 55.7059
-with open("current_location.txt", "w") as f:
-f.write(f"{current_longitude},{current_latitude}")
+
+    with open("current_location.txt", "w") as f:
+        f.write(f"{current_longitude},{current_latitude}")
 
 # ================================
-# Send initial position to database server
+# Skicka initial status
 # ================================
-drone_info = {
-'id': myID,
-'longitude': current_longitude,
-'latitude': current_latitude,
-'status': 'idle'
-}
+requests.post(SERVER, json={
+    'id': myID,
+    'longitude': current_longitude,
+    'latitude': current_latitude,
+    'status': 'idle'
+})
 
-requests.post(SERVER, json=drone_info)
-
+print("Drone started:", myID)
 
 # ================================
-# Receive delivery request
+# Ta emot uppdrag
 # ================================
 @app.route('/', methods=['POST'])
 def main():
 
-coords = request.json
+    coords = request.json
 
-# Read current position from file
-with open("current_location.txt", "r") as f:
-line = f.readline().strip()
-current_longitude, current_latitude = line.split(",")
+    # Läs nuvarande position
+    with open("current_location.txt", "r") as f:
+        line = f.readline().strip()
+        current_longitude, current_latitude = line.split(",")
         current_longitude = float(current_longitude)
         current_latitude = float(current_latitude)
 
-from_coord = coords['from']
-to_coord = coords['to']
+    from_coord = coords['from']
+    to_coord = coords['to']
 
-# Update status to busy
-drone_info = {
-'id': myID,
-'longitude': current_longitude,
-'latitude': current_latitude,
-'status': 'busy'
-}
+    # Uppdatera status
+    requests.post(SERVER, json={
+        'id': myID,
+        'longitude': current_longitude,
+        'latitude': current_latitude,
+        'status': 'busy'
+    })
 
-requests.post(SERVER, json=drone_info)
+    # Starta simulator
+    subprocess.Popen([
+        "python3", "simulator.py",
+        "--clong", str(current_longitude),
+        "--clat", str(current_latitude),
+        "--flong", str(from_coord[0]),
+        "--flat", str(from_coord[1]),
+        "--tlong", str(to_coord[0]),
+        "--tlat", str(to_coord[1]),
+        "--id", myID
+    ])
 
-# Start simulator as background process
-subprocess.Popen([
-"python3", "simulator.py",
-"--clong", str(current_longitude),
-"--clat", str(current_latitude),
-"--flong", str(from_coord[0]),
-"--flat", str(from_coord[1]),
-"--tlong", str(to_coord[0]),
-"--tlat", str(to_coord[1]),
-"--id", myID
-])
-
-return "New route received"
+    return "New route received"
 
 
 # ================================
+# START SERVER
+# ================================
 if __name__ == '__main__':
-app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
