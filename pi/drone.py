@@ -6,22 +6,12 @@ import os
 import socket
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
+CORS(app)
 
-# ================================
-# Drone ID (ändra per Pi)
-# ================================
 myID = "1"
-
-# ================================
-# Database server (DIN DATOR)
-# ================================
 SERVER = "http://192.168.0.2:5001/drone"
 
 
-# ================================
-# Hämta Raspberry Pi IP
-# ================================
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -37,27 +27,17 @@ def get_ip():
 myIP = get_ip()
 
 
-# ================================
-# Start position
-# ================================
 if os.path.exists("current_location.txt"):
     with open("current_location.txt", "r") as f:
-        line = f.readline().strip()
-        current_longitude, current_latitude = line.split(",")
-        current_longitude = float(current_longitude)
-        current_latitude = float(current_latitude)
+        lon, lat = f.readline().split(",")
+        current_longitude = float(lon)
+        current_latitude = float(lat)
 else:
     current_longitude = 13.2005
     current_latitude = 55.7059
 
-    with open("current_location.txt", "w") as f:
-        f.write(f"{current_longitude},{current_latitude}")
 
-
-# ================================
-# Registrera drone i server
-# ================================
-def register(status="idle"):
+def register(status):
     try:
         requests.post(SERVER, json={
             "id": myID,
@@ -65,28 +45,30 @@ def register(status="idle"):
             "longitude": current_longitude,
             "latitude": current_latitude,
             "status": status
-        }, timeout=3)
-    except Exception as e:
-        print("Server not reachable:", e)
+        })
+    except:
+        print("SERVER ERROR")
 
 
 register("idle")
 
-print("Drone started:", myID, "IP:", myIP)
+print("DRONE STARTED:", myID, myIP)
 
 
-# ================================
-# Ta emot uppdrag
-# ================================
 @app.route('/', methods=['POST'])
 def main():
 
+    global current_longitude, current_latitude
+
     coords = request.json
 
-    from_coord = coords['from']
-    to_coord = coords['to']
+    from_coord = coords["from"]
+    to_coord = coords["to"]
 
-    # uppdatera status
+    print("DRONE RECEIVED")
+    print("FROM:", from_coord)
+    print("TO:", to_coord)
+
     register("busy")
 
     subprocess.Popen([
@@ -100,11 +82,17 @@ def main():
         "--id", myID
     ])
 
-    return "New route received"
+    # uppdatera position
+    current_longitude = to_coord[0]
+    current_latitude = to_coord[1]
+
+    with open("current_location.txt", "w") as f:
+        f.write(f"{current_longitude},{current_latitude}")
+
+    register("idle")
+
+    return "OK"
 
 
-# ================================
-# START SERVER
-# ================================
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
