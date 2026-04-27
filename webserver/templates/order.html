@@ -55,12 +55,10 @@
       border-radius: 10px;
       font-size: 16px;
       cursor: pointer;
-      transition: 0.2s;
     }
 
     button:hover {
       background: #27ae60;
-      transform: scale(1.02);
     }
   </style>
 </head>
@@ -80,7 +78,24 @@
 
     <h2>Send Drone Mission</h2>
 
+    <!-- FIX: vi skickar coords till backend -->
     <form method="POST" action="/send_order/{{ farmer }}">
+
+      <input type="hidden" name="from_long" value="13.42416">
+      <input type="hidden" name="from_lat" value="55.81904">
+
+      <!-- Här är det som skiljer users -->
+      {% if farmer == "anna" %}
+        <input type="hidden" name="to_long" value="13.4156">
+        <input type="hidden" name="to_lat" value="55.8251">
+      {% elif farmer == "erik" %}
+        <input type="hidden" name="to_long" value="13.4234">
+        <input type="hidden" name="to_lat" value="55.8216">
+      {% else %}
+        <input type="hidden" name="to_long" value="13.4200">
+        <input type="hidden" name="to_lat" value="55.8156">
+      {% endif %}
+
       <button type="submit">Launch Drone</button>
     </form>
 
