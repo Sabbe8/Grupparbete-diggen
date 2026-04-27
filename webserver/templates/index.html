@@ -1,26 +1,34 @@
 <!DOCTYPE html>
 <html>
 <head>
+
   <meta charset="utf-8">
-  <title>Map</title>
+  <title>TerraScan Map</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- jQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
   <style>
     body {
       margin: 0;
+      background: #eaf5ee;
       font-family: Arial;
     }
 
     #map {
-      height: 100vh;
-      background: #e5e5e5;
+      height: 720px;
+      width: 1200px;
+      margin: 20px auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      border: 3px solid #2ecc71;
     }
-  </style>
-</head>
 
-<body>
-
-<a href="/admin/login"
-   style="
+    .admin-btn {
       position: fixed;
       top: 15px;
       right: 15px;
@@ -29,13 +37,90 @@
       padding: 10px 15px;
       border-radius: 8px;
       text-decoration: none;
-   ">
-   Admin
-</a>
+      z-index: 9999;
+    }
+  </style>
 
-<div id="map">
-  <h2 style="padding:20px;">Map View</h2>
-</div>
+</head>
+
+<body>
+
+<a href="/admin/login" class="admin-btn">Admin</a>
+
+<div id="map"></div>
+
+<script>
+
+  // 🗺️ init map
+  var map = L.map('map').setView([55.81904, 13.42416], 15);
+
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  // 🚁 drone markers
+  var droneMarkers = {};
+
+  function updateDrones() {
+
+    $.ajax({
+      url: '/get_drones',   // 🔥 viktigt: inte localhost hårdkodat
+      dataType: 'json',
+
+      success: function(data) {
+
+        for (const droneID in data) {
+
+          var drone = data[droneID];
+
+          var lat = parseFloat(drone.latitude);
+          var lon = parseFloat(drone.longitude);
+          var status = drone.status;
+
+          // färg beroende på status
+          var color = (status === "idle") ? "#2ecc71" : "#e74c3c";
+
+          // skapa marker om den inte finns
+          if (!droneMarkers[droneID]) {
+
+            var marker = L.circleMarker([lat, lon], {
+              radius: 8,
+              color: color,
+              fillColor: color,
+              fillOpacity: 0.9,
+              weight: 2
+            }).addTo(map);
+
+            marker.bindPopup("Drone " + droneID);
+
+            droneMarkers[droneID] = marker;
+
+          } else {
+
+            // uppdatera position + färg
+            droneMarkers[droneID].setLatLng([lat, lon]);
+
+            droneMarkers[droneID].setStyle({
+              color: color,
+              fillColor: color
+            });
+          }
+        }
+      },
+
+      error: function(err) {
+        console.log("Error fetching drones", err);
+      },
+
+      complete: function() {
+        setTimeout(updateDrones, 1000); // 🔥 lite snällare än 100ms
+      }
+    });
+  }
+
+  updateDrones();
+
+</script>
 
 </body>
 </html>
