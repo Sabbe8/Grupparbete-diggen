@@ -1,97 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
   <meta charset="utf-8">
-  <title>TerraScan</title>
+  <title>Map</title>
 
   <style>
     body {
       margin: 0;
-      background: #eaf5ee; /* ljus grön bakgrund */
       font-family: Arial;
     }
 
     #map {
-      height: 720px;
-      width: 1200px;
-      margin: 20px auto;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      border: 3px solid #2ecc71;
+      height: 100vh;
+      background: #e5e5e5;
     }
   </style>
 </head>
 
 <body>
 
-  <div id="map"></div>
+<!-- 🔥 ADMIN KNAPP -->
+<a href="/admin/login"
+   style="
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: #2ecc71;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      text-decoration: none;
+      z-index: 9999;
+   ">
+   Admin
+</a>
 
-  <script>
-    // Skapa Leaflet-kartan
-    var map = L.map('map').setView([55.81904, 13.42416], 15);
-
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(map);
-
-    // Drönare
-    var droneMarkers = {};
-
-    function updateDrones() {
-      $.ajax({
-        url: 'http://localhost:5000/get_drones',
-        dataType: 'json',
-        success: function(data){
-
-          for (const droneID in data){
-
-            var drone = data[droneID];
-
-            var lat = parseFloat(drone.latitude);
-            var lon = parseFloat(drone.longitude);
-            var status = drone.status;
-
-            // 🌿 grön = idle, röd = busy
-            var color = (status === "idle") ? "#2ecc71" : "#e74c3c";
-
-            if (!droneMarkers[droneID]) {
-
-              var marker = L.circleMarker([lat, lon], {
-                radius: 9,
-                color: color,
-                fillColor: color,
-                fillOpacity: 0.9,
-                weight: 2
-              }).addTo(map);
-
-              marker.bindPopup("Drone " + droneID);
-              droneMarkers[droneID] = marker;
-
-            } else {
-              droneMarkers[droneID].setLatLng([lat, lon]);
-              droneMarkers[droneID].setStyle({
-                color: color,
-                fillColor: color
-              });
-            }
-          }
-        },
-        complete: function(){
-          setTimeout(updateDrones, 100);
-        },
-        error: function(err){
-          console.log("Fel vid hämtning av drönare: ", err);
-          setTimeout(updateDrones, 100);
-        }
-      });
-    }
-
-    updateDrones();
-  </script>
+<div id="map">
+  <h2 style="padding:20px;">Map View</h2>
+</div>
 
 </body>
 </html>
