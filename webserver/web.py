@@ -6,81 +6,69 @@ from controller import send_mission
 
 app = Flask(__name__)
 
-# ================================
-# Redis
-# ================================
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
-# ================================
-# Users
-# ================================
 FARMERS = {
-    "anna": {"password": "pass123", "from": (13.42416, 55.81904), "to": (13.4156, 55.8251)},
-    "erik": {"password": "erikpwd", "from": (13.42416, 55.81904), "to": (13.4234, 55.8216)},
-    "lisa": {"password": "lisapwd", "from": (13.42416, 55.81904), "to": (13.4200, 55.8156)}
+    "anna": {"password": "pass123"},
+    "erik": {"password": "erikpwd"},
+    "lisa": {"password": "lisapwd"}
 }
 
-# ================================
 # LOGIN
-# ================================
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    message = ""
-
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        user = request.form.get('username')
+        pw = request.form.get('password')
 
-        if username in FARMERS and FARMERS[username]['password'] == password:
-            return redirect(url_for('order_page', farmer=username))
-        else:
-            message = "Fel namn eller lösenord!"
+        if user in FARMERS and FARMERS[user]["password"] == pw:
+            return redirect(url_for('order_page', farmer=user))
 
-    return render_template('login.html', message=message)
+    return render_template('login.html')
 
 
-# ================================
 # ORDER PAGE
-# ================================
 @app.route('/order/<farmer>')
 def order_page(farmer):
     return render_template('order.html', farmer=farmer)
 
 
-# ================================
-# SEND ORDER
-# ================================
+# SEND ORDER (FIXAD)
 @app.route('/send_order/<farmer>', methods=['POST'])
 def send_order(farmer):
 
-    coords = FARMERS[farmer]
+    # 🔥 NU kommer data från HTML
+    from_coord = (
+        float(request.form["from_long"]),
+        float(request.form["from_lat"])
+    )
+
+    to_coord = (
+        float(request.form["to_long"]),
+        float(request.form["to_lat"])
+    )
 
     print("WEB ORDER")
-    print("FROM:", coords["from"])
-    print("TO:", coords["to"])
+    print("FROM:", from_coord)
+    print("TO:", to_coord)
 
     threading.Thread(
         target=send_mission,
-        args=(coords["from"], coords["to"])
+        args=(from_coord, to_coord)
     ).start()
 
-    return redirect(url_for('map_page'))
+    return redirect(url_for('login'))
 
 
-# ================================
-# MAP (index.html)
-# ================================
+# MAP
 @app.route('/map')
 def map_page():
     return render_template('index.html')
 
 
-# ================================
-# GET DRONES (för kartan)
-# ================================
+# DRONES
 @app.route('/get_drones')
 def get_drones():
-
     drones = {}
 
     for key in r.keys("drone:*"):
@@ -90,8 +78,5 @@ def get_drones():
     return drones
 
 
-# ================================
-# START SERVER
-# ================================
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
