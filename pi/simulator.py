@@ -81,8 +81,7 @@ def run(id, current_coords, from_coords, to_coords, SERVER_URL):
 
 if __name__ == "__main__":
 
-    # SERVER_URL = "http://192.168.0.2:5001/drone"
-    SERVER_URL = "http://localhost:5001/drone"
+    SERVER_URL = "http://192.168.0.2:5001/drone"
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--clong", type=float)

@@ -15,9 +15,9 @@ r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 # Farmers
 # ================================
 FARMERS = {
-    "anna": {"password": "pass123", "from": (13.42416, 55.81904), "to": (13.4114, 55.8252)},
-    "erik": {"password": "erikpwd", "from": (13.42416, 55.81904), "to": (13.4200, 55.8300)},
-    "lisa": {"password": "lisapwd", "from": (13.42416, 55.81904), "to": (13.4300, 55.8100)}
+    "anna": {"password": "pass123", "from": (13.42416, 55.81904), "to": (13.4156, 55.8251)},
+    "erik": {"password": "erikpwd", "from": (13.42416, 55.81904), "to": (13.4234, 55.8216)},
+    "lisa": {"password": "lisapwd", "from": (13.42416, 55.81904), "to": (13.4200, 55.8156)}
 }
 
 # ================================
