@@ -61,25 +61,24 @@ def map_page():
 def admin_login():
 
     if request.method == 'POST':
-
         username = request.form.get('username')
         password = request.form.get('password')
 
-        print("🔐 ADMIN TRY:")
-        print("username =", username)
-        print("password =", password)
-
-        # ta bort alla dolda fel (spaces etc)
-        username = username.strip() if username else ""
-        password = password.strip() if password else ""
-
         if username == "admin" and password == "admin123":
-            print("✅ ADMIN LOGIN SUCCESS")
-            return redirect('/admin')
-
-        print("❌ ADMIN LOGIN FAILED")
+            return redirect(url_for('admin'))
 
     return render_template('admin_login.html')
+
+
+@app.route('/admin')
+def admin():
+
+    drones = {}
+
+    for key in r.keys("drone:*"):
+        drones[key] = json.loads(r.get(key))
+
+    return render_template('admin.html', drones=drones)
 
 # ========================
 # ADMIN PAGE
