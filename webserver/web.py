@@ -15,9 +15,8 @@ USERS = {
 }
 
 # ========================
-# ADMIN (enkel och säker)
+# ADMIN
 # ========================
-
 ADMIN_USER = "admin"
 ADMIN_PASS = "admin123"
 
@@ -47,7 +46,7 @@ def order_page(farmer):
 
 
 # ========================
-# MAP
+# MAP PAGE
 # ========================
 @app.route('/map')
 def map_page():
@@ -55,7 +54,7 @@ def map_page():
 
 
 # ========================
-# 🔥 ADMIN LOGIN (FIX)
+# ADMIN LOGIN
 # ========================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -64,24 +63,16 @@ def admin_login():
         username = request.form.get('username')
         password = request.form.get('password')
 
-        if username == "admin" and password == "admin123":
+        print("ADMIN TRY:", username, password)
+
+        if username == ADMIN_USER and password == ADMIN_PASS:
             return redirect(url_for('admin'))
 
     return render_template('admin_login.html')
 
 
-@app.route('/admin')
-def admin():
-
-    drones = {}
-
-    for key in r.keys("drone:*"):
-        drones[key] = json.loads(r.get(key))
-
-    return render_template('admin.html', drones=drones)
-
 # ========================
-# ADMIN PAGE
+# ADMIN DASHBOARD
 # ========================
 @app.route('/admin')
 def admin():
@@ -89,7 +80,10 @@ def admin():
     drones = {}
 
     for key in r.keys("drone:*"):
-        drones[key] = json.loads(r.get(key))
+        data = r.get(key)
+
+        if data:
+            drones[key] = json.loads(data)
 
     return render_template('admin.html', drones=drones)
 
@@ -103,10 +97,16 @@ def get_drones():
     drones = {}
 
     for key in r.keys("drone:*"):
-        drones[key] = json.loads(r.get(key))
+        data = r.get(key)
+
+        if data:
+            drones[key] = json.loads(data)
 
     return drones
 
 
+# ========================
+# START SERVER
+# ========================
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
