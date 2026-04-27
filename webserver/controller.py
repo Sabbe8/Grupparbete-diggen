@@ -6,14 +6,11 @@ r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 
 def get_available_drone():
-    keys = r.keys("drone:*")
 
-    for key in keys:
+    for key in r.keys("drone:*"):
         drone = json.loads(r.get(key))
 
-        print("CONTROLLER CHECK:", drone)
-
-        if drone.get("status") == "idle":
+        if drone["status"] == "idle":
             return drone
 
     return None
@@ -27,23 +24,14 @@ def send_mission(from_coords, to_coords):
         print("NO DRONE AVAILABLE")
         return
 
-    ip = drone.get("ip")
-
-    if not ip:
-        print("DRONE HAS NO IP:", drone)
-        return
+    ip = drone["ip"]
 
     url = f"http://{ip}:5000/"
 
     print("CONTROLLER SEND")
-    print("TO DRONE:", ip)
-    print("FROM:", from_coords)
-    print("TO:", to_coords)
+    print(from_coords, "→", to_coords)
 
-    try:
-        requests.post(url, json={
-            "from": from_coords,
-            "to": to_coords
-        })
-    except Exception as e:
-        print("ERROR:", e)
+    requests.post(url, json={
+        "from": from_coords,
+        "to": to_coords
+    })
