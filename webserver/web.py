@@ -15,11 +15,12 @@ USERS = {
 }
 
 # ========================
-# ADMIN
+# ADMIN (enkel och säker)
 # ========================
-ADMIN = {
-    "admin": "admin123"
-}
+
+ADMIN_USER = "admin"
+ADMIN_PASS = "admin123"
+
 
 # ========================
 # USER LOGIN
@@ -54,19 +55,25 @@ def map_page():
 
 
 # ========================
-# ADMIN LOGIN
+# 🔥 ADMIN LOGIN (FIX)
 # ========================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
+
+    error = ""
 
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
 
-        if username in ADMIN and ADMIN[username] == password:
+        print("ADMIN LOGIN ATTEMPT:", username, password)
+
+        if username == ADMIN_USER and password == ADMIN_PASS:
             return redirect(url_for('admin'))
 
-    return render_template('admin_login.html')
+        error = "Wrong username or password"
+
+    return render_template('admin_login.html', error=error)
 
 
 # ========================
