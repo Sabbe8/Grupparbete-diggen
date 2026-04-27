@@ -5,11 +5,10 @@ import threading
 from controller import send_mission
 
 app = Flask(__name__)
-
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 # ================================
-# USERS (bara login här nu)
+# USERS
 # ================================
 USERS = {
     "anna": "pass123",
@@ -22,7 +21,6 @@ USERS = {
 # ================================
 @app.route('/', methods=['GET', 'POST'])
 def login():
-
     if request.method == 'POST':
         user = request.form.get('username')
         pw = request.form.get('password')
@@ -42,12 +40,11 @@ def order_page(farmer):
 
 
 # ================================
-# SEND ORDER
+# SEND ORDER (USER)
 # ================================
 @app.route('/send_order/<farmer>', methods=['POST'])
 def send_order(farmer):
 
-    # 🔥 ta coords från HTML
     from_coord = (
         float(request.form["from_long"]),
         float(request.form["from_lat"])
@@ -58,23 +55,18 @@ def send_order(farmer):
         float(request.form["to_lat"])
     )
 
-    print("WEB SEND ORDER")
-    print("USER:", farmer)
-    print("FROM:", from_coord)
-    print("TO:", to_coord)
+    print("USER ORDER:", farmer, from_coord, to_coord)
 
-    # kör mission i bakgrund
     threading.Thread(
         target=send_mission,
         args=(from_coord, to_coord)
     ).start()
 
-    # 🔥 VIKTIG FIX: gå till kartan
     return redirect(url_for('map_page'))
 
 
 # ================================
-# MAP (index.html)
+# MAP PAGE
 # ================================
 @app.route('/map')
 def map_page():
@@ -82,22 +74,58 @@ def map_page():
 
 
 # ================================
-# DRONES (för karta)
+# ADMIN PAGE
 # ================================
-@app.route('/get_drones')
-def get_drones():
+@app.route('/admin')
+def admin():
 
     drones = {}
 
     for key in r.keys("drone:*"):
-        data = json.loads(r.get(key))
-        drones[data['id']] = data
+        drones[key] = json.loads(r.get(key))
+
+    return render_template('admin.html', drones=drones)
+
+
+# ================================
+# ADMIN SEND MISSION
+# ================================
+@app.route('/admin/send', methods=['POST'])
+def admin_send():
+
+    drone_id = request.form["drone_id"]
+
+    drone = json.loads(r.get(f"drone:{drone_id}"))
+    ip = drone["ip"]
+
+    url = f"http://{ip}:5000/"
+
+    requests.post(url, json={
+        "from": (
+            float(request.form["from_long"]),
+            float(request.form["from_lat"])
+        ),
+        "to": (
+            float(request.form["to_long"]),
+            float(request.form["to_lat"])
+        )
+    })
+
+    return redirect(url_for('admin'))
+
+
+# ================================
+# API FOR MAP
+# ================================
+@app.route('/get_drones')
+def get_drones():
+    drones = {}
+
+    for key in r.keys("drone:*"):
+        drones[key] = json.loads(r.get(key))
 
     return drones
 
 
-# ================================
-# START
-# ================================
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
