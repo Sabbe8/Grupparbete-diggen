@@ -1,8 +1,11 @@
 from flask import Flask, request, render_template, redirect, url_for
 import redis
 import json
+import threading
+from controller import send_mission
 
 app = Flask(__name__)
+
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 # ========================
@@ -15,14 +18,7 @@ USERS = {
 }
 
 # ========================
-# ADMIN
-# ========================
-ADMIN_USER = "admin"
-ADMIN_PASS = "admin123"
-
-
-# ========================
-# USER LOGIN
+# LOGIN
 # ========================
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -46,7 +42,31 @@ def order_page(farmer):
 
 
 # ========================
-# MAP PAGE
+# SEND DRONE → MAP
+# ========================
+@app.route('/send_order/<farmer>', methods=['POST'])
+def send_order(farmer):
+
+    from_coord = (
+        float(request.form["from_long"]),
+        float(request.form["from_lat"])
+    )
+
+    to_coord = (
+        float(request.form["to_long"]),
+        float(request.form["to_lat"])
+    )
+
+    threading.Thread(
+        target=send_mission,
+        args=(from_coord, to_coord)
+    ).start()
+
+    return redirect(url_for('map_page'))
+
+
+# ========================
+# MAP (index.html)
 # ========================
 @app.route('/map')
 def map_page():
@@ -63,9 +83,7 @@ def admin_login():
         username = request.form.get('username')
         password = request.form.get('password')
 
-        print("ADMIN TRY:", username, password)
-
-        if username == ADMIN_USER and password == ADMIN_PASS:
+        if username == "admin" and password == "admin123":
             return redirect(url_for('admin'))
 
     return render_template('admin_login.html')
@@ -81,7 +99,6 @@ def admin():
 
     for key in r.keys("drone:*"):
         data = r.get(key)
-
         if data:
             drones[key] = json.loads(data)
 
@@ -98,15 +115,11 @@ def get_drones():
 
     for key in r.keys("drone:*"):
         data = r.get(key)
-
         if data:
             drones[key] = json.loads(data)
 
     return drones
 
 
-# ========================
-# START SERVER
-# ========================
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
