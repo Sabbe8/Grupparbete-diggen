@@ -1,0 +1,27 @@
+<h1>Admin Panel</h1>
+
+{% for key, drone in drones.items() %}
+
+<div style="border:1px solid black; margin:10px; padding:10px">
+
+  <p>ID: {{ drone.id }}</p>
+  <p>Status: {{ drone.status }}</p>
+  <p>IP: {{ drone.ip }}</p>
+
+  <form method="POST" action="/admin/send">
+
+    <input type="hidden" name="drone_id" value="{{ drone.id }}">
+
+    <input name="from_long" placeholder="from long">
+    <input name="from_lat">
+
+    <input name="to_long">
+    <input name="to_lat">
+
+    <button>Send</button>
+
+  </form>
+
+</div>
+
+{% endfor %}
