@@ -8,6 +8,7 @@ def getMovement(src, dst):
     speed = 0.00005
     dst_x, dst_y = dst
     x, y = src
+    print(x, y)
     direction = math.sqrt((dst_x - x)**2 + (dst_y - y)**2)
 
     if direction == 0:
@@ -22,6 +23,7 @@ def moveDrone(src, d_long, d_la):
     x, y = src
     x = x + d_long
     y = y + d_la
+    print(x, y)
     return (x, y)
 
 
