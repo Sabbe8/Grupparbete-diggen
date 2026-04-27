@@ -1,125 +1,103 @@
-from flask import Flask, request
-from flask_cors import CORS
-import subprocess
-import requests
-import os
-import socket
+from flask import Flask, request, render_template, redirect, url_for
+from controller import send_mission
+import redis
+import json
+import threading   # 🔥 NY
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
 
 # ================================
-# Drone ID (ändra per Raspberry Pi)
+# Redis
 # ================================
-myID = "1"
-
-# ================================
-# Database server (DIN DATOR)
-# ================================
-SERVER = "http://192.168.0.2:5001/drone"
-
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 # ================================
-# Hämta Raspberry Pi IP
+# Farmers
 # ================================
-def get_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-    except:
-        ip = "127.0.0.1"
-    finally:
-        s.close()
-    return ip
-
-
-myIP = get_ip()
-
+FARMERS = {
+    "anna": {"password": "pass123", "from": (13.42416, 55.81904), "to": (13.4156, 55.8251)},
+    "erik": {"password": "erikpwd", "from": (13.42416, 55.81904), "to": (13.4234, 55.8216)},
+    "lisa": {"password": "lisapwd", "from": (13.42416, 55.81904), "to": (13.4200, 55.8156)}
+}
 
 # ================================
-# Start position
+# LOGIN
 # ================================
-if os.path.exists("current_location.txt"):
-    with open("current_location.txt", "r") as f:
-        line = f.readline().strip()
-        current_longitude, current_latitude = line.split(",")
-        current_longitude = float(current_longitude)
-        current_latitude = float(current_latitude)
-else:
-    current_longitude = 13.2005
-    current_latitude = 55.7059
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    message = ""
 
-    with open("current_location.txt", "w") as f:
-        f.write(f"{current_longitude},{current_latitude}")
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        if username in FARMERS and FARMERS[username]['password'] == password:
+            return redirect(url_for('order_page', farmer=username))
+        else:
+            message = "Fel namn eller lösenord!"
+
+    return render_template('login.html', message=message)
 
 
 # ================================
-# Registrera drone
+# ORDER PAGE
 # ================================
-def register(status="idle"):
-    try:
-        requests.post(SERVER, json={
-            "id": myID,
-            "ip": myIP,
-            "longitude": current_longitude,
-            "latitude": current_latitude,
-            "status": status
-        }, timeout=3)
-    except Exception as e:
-        print("Server not reachable:", e)
-
-
-register("idle")
-
-print("Drone started:", myID, "IP:", myIP)
+@app.route('/order/<farmer>')
+def order_page(farmer):
+    return render_template('order.html', farmer=farmer)
 
 
 # ================================
-# Ta emot uppdrag
+# SEND ORDER (FIXAD)
 # ================================
-@app.route('/', methods=['POST'])
-def main():
+@app.route('/send_order/<farmer>', methods=['POST'])
+def send_order(farmer):
 
-    global current_longitude, current_latitude
+    coords = FARMERS[farmer]
 
-    coords = request.json
+    print("FARMER:", farmer)
+    print("FROM:", coords["from"])
+    print("TO:", coords["to"])
 
-    from_coord = coords['from']
-    to_coord = coords['to']
+    # 🔥 Kör i bakgrunden (snabb redirect)
+    threading.Thread(
+        target=send_mission,
+        args=(coords["from"], coords["to"])
+    ).start()
 
-    # status = busy
-    register("busy")
-
-    # start simulator
-    subprocess.Popen([
-        "python3", "simulator.py",
-        "--clong", str(current_longitude),
-        "--clat", str(current_latitude),
-        "--flong", str(from_coord[0]),
-        "--flat", str(from_coord[1]),
-        "--tlong", str(to_coord[0]),
-        "--tlat", str(to_coord[1]),
-        "--id", myID
-    ])
-
-    # ================================
-    # FIX: uppdatera position
-    # ================================
-    current_longitude = to_coord[0]
-    current_latitude = to_coord[1]
-
-    with open("current_location.txt", "w") as f:
-        f.write(f"{current_longitude},{current_latitude}")
-
-    # status tillbaka till idle
-    register("idle")
-
-    return "New route received"
+    return redirect(url_for('map_page'))
 
 
 # ================================
-# START SERVER
+# MAP
+# ================================
+@app.route('/map')
+def map_page():
+    return render_template('index.html')
+
+
+# ================================
+# GET DRONES
+# ================================
+@app.route('/get_drones')
+def get_drones():
+
+    drones = {}
+
+    for key in r.keys("drone:*"):
+        data = json.loads(r.get(key))
+
+        drones[data['id']] = {
+            "longitude": float(data['longitude']),
+            "latitude": float(data['latitude']),
+            "status": data['status']
+        }
+
+    return drones
+
+
+# ================================
+# START
 # ================================
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(port=5000, debug=False)
