@@ -1,24 +1,94 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Panel</title>
+  <meta charset="utf-8">
+  <title>Admin Dashboard</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    #map {
+      flex: 2;
+      background: #e5e5e5;
+      padding: 20px;
+    }
+
+    .sidebar {
+      flex: 1;
+      background: #f4f4f4;
+      padding: 15px;
+      overflow-y: auto;
+      border-left: 2px solid #ccc;
+    }
+
+    .drone {
+      background: white;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .idle {
+      color: green;
+      font-weight: bold;
+    }
+
+    .busy {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
 
-<h1>🚁 Admin Panel</h1>
+<div class="container">
 
-{% for key, drone in drones.items() %}
+  <!-- MAP -->
+  <div id="map">
+    <h2>🗺️ Map View</h2>
+    <p>(Här kopplar vi in riktig karta senare)</p>
+  </div>
 
-<div style="border:1px solid #ccc; padding:10px; margin:10px;">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
 
-  <p><b>ID:</b> {{ drone.id }}</p>
-  <p><b>Status:</b> {{ drone.status }}</p>
-  <p><b>IP:</b> {{ drone.ip }}</p>
+    <h2>🚁 Drones</h2>
+
+    {% for key, drone in drones.items() %}
+
+    <div class="drone">
+
+      <p><b>ID:</b> {{ drone.id }}</p>
+
+      <p>
+        <b>Status:</b>
+        <span class="{{ drone.status }}">
+          {{ drone.status }}
+        </span>
+      </p>
+
+      <p><b>IP:</b> {{ drone.ip }}</p>
+
+      <p><b>Lat:</b> {{ drone.latitude }}</p>
+      <p><b>Long:</b> {{ drone.longitude }}</p>
+
+    </div>
+
+    {% endfor %}
+
+  </div>
 
 </div>
-
-{% endfor %}
 
 </body>
 </html>
