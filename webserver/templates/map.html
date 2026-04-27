@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+  <style>
+    body { margin:0; font-family:Arial; }
+
+    #map { height: 100vh; }
+
+    /* 🧑‍💼 ADMIN PANEL */
+    .sidebar {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100%;
+      background: white;
+      z-index: 9999;
+      padding: 10px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .admin .sidebar {
+      display: block;
+    }
+  </style>
+</head>
+
+<body class="{% if admin %}admin{% endif %}">
+
+<div id="map"></div>
+
+<!-- 🔥 ADMIN PANEL -->
+<div class="sidebar">
+  <h3>Admin Panel</h3>
+  <div id="droneList"></div>
+</div>
+
+<script>
+
+var map = L.map('map').setView([55.81904, 13.42416], 15);
+
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19
+}).addTo(map);
+
+var markers = {};
+
+function updateDrones() {
+
+  $.ajax({
+    url: '/get_drones',
+    dataType: 'json',
+
+    success: function(data) {
+
+      let html = "";
+
+      for (let id in data) {
+
+        let d = data[id];
+
+        let lat = parseFloat(d.latitude);
+        let lon = parseFloat(d.longitude);
+
+        let color = d.status === "idle" ? "green" : "red";
+
+        // map marker
+        if (!markers[id]) {
+          markers[id] = L.circleMarker([lat, lon], {
+            radius: 8,
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.9
+          }).addTo(map);
+        } else {
+          markers[id].setLatLng([lat, lon]);
+          markers[id].setStyle({ color, fillColor: color });
+        }
+
+        // admin list
+        html += `
+          <p>
+            <b>${id}</b><br>
+            ${d.status}<br>
+            ${lat.toFixed(4)}, ${lon.toFixed(4)}
+          </p>
+          <hr>
+        `;
+      }
+
+      document.getElementById("droneList").innerHTML = html;
+    }
+  });
+
+  setTimeout(updateDrones, 1000);
+}
+
+updateDrones();
+
+</script>
+
+</body>
+</html>
