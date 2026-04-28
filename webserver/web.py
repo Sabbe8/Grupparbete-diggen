@@ -5,7 +5,6 @@ import threading
 from controller import send_mission
 
 app = Flask(__name__)
-
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 # ========================
@@ -15,6 +14,24 @@ USERS = {
     "anna": "pass123",
     "erik": "erikpwd",
     "lisa": "lisapwd"
+}
+
+# ========================
+# FASTA RUTTER
+# ========================
+ROUTES = {
+    "anna": {
+        "from": (13.42416, 55.81904),
+        "to": (13.4156, 55.8251)
+    },
+    "erik": {
+        "from": (13.42416, 55.81904),
+        "to": (13.4234, 55.8216)
+    },
+    "lisa": {
+        "from": (13.42416, 55.81904),
+        "to": (13.4200, 55.8156)
+    }
 }
 
 # ========================
@@ -42,20 +59,15 @@ def order_page(farmer):
 
 
 # ========================
-# SEND DRONE → MAP
+# SEND DRONE (FAST RUTT)
 # ========================
 @app.route('/send_order/<farmer>', methods=['POST'])
 def send_order(farmer):
 
-    from_coord = (
-        float(request.form["from_long"]),
-        float(request.form["from_lat"])
-    )
+    route = ROUTES[farmer]
 
-    to_coord = (
-        float(request.form["to_long"]),
-        float(request.form["to_lat"])
-    )
+    from_coord = route["from"]
+    to_coord = route["to"]
 
     threading.Thread(
         target=send_mission,
@@ -66,7 +78,7 @@ def send_order(farmer):
 
 
 # ========================
-# MAP (index.html)
+# MAP
 # ========================
 @app.route('/map')
 def map_page():
@@ -114,18 +126,9 @@ def get_drones():
     drones = {}
 
     for key in r.keys("drone:*"):
-
         data = r.get(key)
-
         if data:
-            drone = json.loads(data)
-
-            drones[drone["id"]] = {
-                "latitude": drone["latitude"],
-                "longitude": drone["longitude"],
-                "status": drone["status"],
-                "ip": drone.get("ip")
-            }
+            drones[key] = json.loads(data)
 
     return drones
 
