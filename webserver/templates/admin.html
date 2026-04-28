@@ -4,6 +4,12 @@
   <meta charset="utf-8">
   <title>Admin</title>
 
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
   <style>
     body { margin: 0; font-family: Arial; }
 
@@ -14,15 +20,14 @@
 
     #map {
       flex: 2;
-      background: #e5e5e5;
-      padding: 20px;
     }
 
     .sidebar {
       flex: 1;
       background: #f4f4f4;
-      padding: 10px;
+      padding: 15px;
       overflow-y: auto;
+      border-left: 2px solid #ddd;
     }
 
     .drone {
@@ -30,6 +35,7 @@
       padding: 10px;
       margin-bottom: 10px;
       border-radius: 8px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
     }
 
     .busy { color: red; }
@@ -41,27 +47,88 @@
 
 <div class="container">
 
-  <div id="map">
-    <h2>Map</h2>
-  </div>
+  <div id="map"></div>
 
   <div class="sidebar">
-
     <h2>Drones</h2>
-
-    {% for key, drone in drones.items() %}
-
-    <div class="drone">
-      <p>ID: {{ drone.id }}</p>
-      <p>Status: <b class="{{ drone.status }}">{{ drone.status }}</b></p>
-      <p>IP: {{ drone.ip }}</p>
-    </div>
-
-    {% endfor %}
-
+    <div id="droneList"></div>
   </div>
 
 </div>
+
+<script>
+
+var map = L.map('map').setView([55.81904, 13.42416], 15);
+
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19
+}).addTo(map);
+
+var droneMarkers = {};
+
+function updateDrones() {
+
+  $.ajax({
+    url: '/get_drones',
+    dataType: 'json',
+
+    success: function(data){
+
+      let html = "";
+
+      for (const droneID in data){
+
+        var drone = data[droneID];
+
+        var lat = parseFloat(drone.latitude);
+        var lon = parseFloat(drone.longitude);
+        var status = drone.status;
+
+        var color = (status === "idle") ? "#2ecc71" : "#e74c3c";
+
+        // skapa marker
+        if (!droneMarkers[droneID]) {
+
+          droneMarkers[droneID] = L.circleMarker([lat, lon], {
+            radius: 8,
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.9
+          }).addTo(map);
+
+        } else {
+
+          droneMarkers[droneID].setLatLng([lat, lon]);
+          droneMarkers[droneID].setStyle({
+            color: color,
+            fillColor: color
+          });
+        }
+
+        // sidebar info
+        html += `
+          <div class="drone">
+            <b>Drone ${droneID}</b><br>
+            Status: <span class="${status}">${status}</span><br>
+            Lat: ${lat.toFixed(4)}<br>
+            Lon: ${lon.toFixed(4)}<br>
+            IP: ${drone.ip}
+          </div>
+        `;
+      }
+
+      document.getElementById("droneList").innerHTML = html;
+    },
+
+    complete: function(){
+      setTimeout(updateDrones, 1000);
+    }
+  });
+}
+
+updateDrones();
+
+</script>
 
 </body>
 </html>
