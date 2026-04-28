@@ -1,58 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Admin</title>
+<meta charset="utf-8">
+<title>Admin</title>
 
-  <link rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-  <style>
-    body { margin: 0; font-family: Arial; }
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #f3f7f4;
+}
 
-    .container {
-      display: flex;
-      height: 100vh;
-    }
+.container {
+  display: flex;
+  height: 100vh;
+}
 
-    #map {
-      flex: 2;
-    }
+#map {
+  flex: 2;
+}
 
-    .sidebar {
-      flex: 1;
-      background: #f4f4f4;
-      padding: 15px;
-      overflow-y: auto;
-      border-left: 2px solid #ddd;
-    }
+.sidebar {
+  flex: 1;
+  background: white;
+  padding: 15px;
+  overflow-y: auto;
+  box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+}
 
-    .drone {
-      background: white;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-    }
+.header {
+  background: #2ecc71;
+  color: white;
+  padding: 15px;
+  font-weight: bold;
+}
 
-    .busy { color: red; }
-    .idle { color: green; }
-  </style>
+.drone {
+  background: #f3f7f4;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+
+.busy { color: #e74c3c; }
+.idle { color: #2ecc71; }
+</style>
+
 </head>
 
 <body>
 
+<div class="header">
+TerraScan Admin
+</div>
+
 <div class="container">
 
-  <div id="map"></div>
+<div id="map"></div>
 
-  <div class="sidebar">
-    <h2>Drones</h2>
-    <div id="droneList"></div>
-  </div>
+<div class="sidebar">
+<h3>Drones</h3>
+<div id="droneList"></div>
+</div>
 
 </div>
 
@@ -60,70 +75,60 @@
 
 var map = L.map('map').setView([55.81904, 13.42416], 15);
 
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:19
 }).addTo(map);
 
-var droneMarkers = {};
+var markers = {};
 
-function updateDrones() {
+function updateDrones(){
 
-  $.ajax({
-    url: '/get_drones',
-    dataType: 'json',
+$.ajax({
+url:'/get_drones',
+dataType:'json',
 
-    success: function(data){
+success:function(data){
 
-      let html = "";
+let html="";
 
-      for (const droneID in data){
+for(const id in data){
 
-        var drone = data[droneID];
+let d=data[id];
 
-        var lat = parseFloat(drone.latitude);
-        var lon = parseFloat(drone.longitude);
-        var status = drone.status;
+let lat=parseFloat(d.latitude);
+let lon=parseFloat(d.longitude);
+let status=d.status;
 
-        var color = (status === "idle") ? "#2ecc71" : "#e74c3c";
+let color=status==="idle"?"#2ecc71":"#e74c3c";
 
-        // skapa marker
-        if (!droneMarkers[droneID]) {
+if(!markers[id]){
+markers[id]=L.circleMarker([lat,lon],{
+radius:8,
+color:color,
+fillColor:color,
+fillOpacity:0.9
+}).addTo(map);
+}else{
+markers[id].setLatLng([lat,lon]);
+markers[id].setStyle({color,fillColor:color});
+}
 
-          droneMarkers[droneID] = L.circleMarker([lat, lon], {
-            radius: 8,
-            color: color,
-            fillColor: color,
-            fillOpacity: 0.9
-          }).addTo(map);
+html+=`
+<div class="drone">
+<b>Drone ${id}</b><br>
+Status: <span class="${status}">${status}</span><br>
+Lat: ${lat.toFixed(4)}<br>
+Lon: ${lon.toFixed(4)}<br>
+IP: ${d.ip}
+</div>
+`;
+}
 
-        } else {
+document.getElementById("droneList").innerHTML=html;
+}
+});
 
-          droneMarkers[droneID].setLatLng([lat, lon]);
-          droneMarkers[droneID].setStyle({
-            color: color,
-            fillColor: color
-          });
-        }
-
-        // sidebar info
-        html += `
-          <div class="drone">
-            <b>Drone ${droneID}</b><br>
-            Status: <span class="${status}">${status}</span><br>
-            Lat: ${lat.toFixed(4)}<br>
-            Lon: ${lon.toFixed(4)}<br>
-            IP: ${drone.ip}
-          </div>
-        `;
-      }
-
-      document.getElementById("droneList").innerHTML = html;
-    },
-
-    complete: function(){
-      setTimeout(updateDrones, 1000);
-    }
-  });
+setTimeout(updateDrones,1000);
 }
 
 updateDrones();
