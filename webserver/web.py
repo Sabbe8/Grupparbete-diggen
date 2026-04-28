@@ -5,6 +5,7 @@ import threading
 from controller import send_mission
 
 app = Flask(__name__)
+
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 # ========================
@@ -35,7 +36,7 @@ ROUTES = {
 }
 
 # ========================
-# LOGIN
+# LOGIN (BONDE)
 # ========================
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -118,7 +119,41 @@ def admin():
 
 
 # ========================
-# API
+# ADMIN CLICK ON MAP → MISSION
+# ========================
+@app.route('/admin/send_mission', methods=['POST'])
+def admin_send_mission():
+
+    data = request.json
+
+    lat = data["lat"]
+    lng = data["lng"]
+
+    # hitta ledig drone
+    drone = None
+
+    for key in r.keys("drone:*"):
+        d = json.loads(r.get(key))
+        if d["status"] == "idle":
+            drone = d
+            break
+
+    if not drone:
+        return {"status": "no drone available"}
+
+    from_coord = (drone["longitude"], drone["latitude"])
+    to_coord = (lng, lat)
+
+    threading.Thread(
+        target=send_mission,
+        args=(from_coord, to_coord)
+    ).start()
+
+    return {"status": "sent"}
+
+
+# ========================
+# API: DRONES
 # ========================
 @app.route('/get_drones')
 def get_drones():
@@ -128,10 +163,20 @@ def get_drones():
     for key in r.keys("drone:*"):
         data = r.get(key)
         if data:
-            drones[key] = json.loads(data)
+            drone = json.loads(data)
+
+            drones[drone["id"]] = {
+                "latitude": drone["latitude"],
+                "longitude": drone["longitude"],
+                "status": drone["status"],
+                "ip": drone.get("ip")
+            }
 
     return drones
 
 
+# ========================
+# START
+# ========================
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
