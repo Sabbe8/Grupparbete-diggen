@@ -1,15 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-
   <meta charset="utf-8">
-  <title>TerraScan Map</title>
+  <title>TerraScan</title>
 
-  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- jQuery -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
   <style>
@@ -28,6 +24,33 @@
       border: 3px solid #2ecc71;
     }
 
+    /* 📷 kamera */
+    #camera {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 320px;
+      height: 240px;
+      background: black;
+      border-radius: 10px;
+      overflow: hidden;
+      z-index: 9999;
+      display: none;
+    }
+
+    #camera img {
+      width: 100%;
+    }
+
+    #closeCam {
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
     .admin-btn {
       position: fixed;
       top: 15px;
@@ -40,7 +63,6 @@
       z-index: 9999;
     }
   </style>
-
 </head>
 
 <body>
@@ -49,76 +71,89 @@
 
 <div id="map"></div>
 
+<!-- 📷 CAMERA WINDOW -->
+<div id="camera">
+  <div id="closeCam" onclick="closeCamera()">X</div>
+  <img id="stream">
+</div>
+
 <script>
 
-  // 🗺️ init map
-  var map = L.map('map').setView([55.81904, 13.42416], 15);
+var map = L.map('map').setView([55.81904, 13.42416], 15);
 
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19
+}).addTo(map);
 
-  // 🚁 drone markers
-  var droneMarkers = {};
+var droneMarkers = {};
 
-  function updateDrones() {
+function openCamera(ip) {
+  document.getElementById("camera").style.display = "block";
+  document.getElementById("stream").src =
+      "http://" + ip + ":8000/video";
+}
 
-    $.ajax({
-      url: '/get_drones',   // 🔥 viktigt: inte localhost hårdkodat
-      dataType: 'json',
+function closeCamera() {
+  document.getElementById("camera").style.display = "none";
+  document.getElementById("stream").src = "";
+}
 
-      success: function(data) {
+function updateDrones() {
 
-        for (const droneID in data) {
+  $.ajax({
+    url: '/get_drones',
+    dataType: 'json',
 
-          var drone = data[droneID];
+    success: function(data){
 
-          var lat = parseFloat(drone.latitude);
-          var lon = parseFloat(drone.longitude);
-          var status = drone.status;
+      for (const droneID in data){
 
-          // färg beroende på status
-          var color = (status === "idle") ? "#2ecc71" : "#e74c3c";
+        var drone = data[droneID];
 
-          // skapa marker om den inte finns
-          if (!droneMarkers[droneID]) {
+        var lat = parseFloat(drone.latitude);
+        var lon = parseFloat(drone.longitude);
+        var status = drone.status;
+        var ip = drone.ip;
 
-            var marker = L.circleMarker([lat, lon], {
-              radius: 8,
-              color: color,
-              fillColor: color,
-              fillOpacity: 0.9,
-              weight: 2
-            }).addTo(map);
+        var color = (status === "idle") ? "#2ecc71" : "#e74c3c";
 
-            marker.bindPopup("Drone " + droneID);
+        if (!droneMarkers[droneID]) {
 
-            droneMarkers[droneID] = marker;
+          var marker = L.circleMarker([lat, lon], {
+            radius: 9,
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.9,
+            weight: 2
+          }).addTo(map);
 
-          } else {
+          marker.bindPopup("Drone " + droneID);
 
-            // uppdatera position + färg
-            droneMarkers[droneID].setLatLng([lat, lon]);
+          // 📷 klicka för kamera
+          marker.on("click", function() {
+            openCamera(ip);
+          });
 
-            droneMarkers[droneID].setStyle({
-              color: color,
-              fillColor: color
-            });
-          }
+          droneMarkers[droneID] = marker;
+
+        } else {
+
+          droneMarkers[droneID].setLatLng([lat, lon]);
+          droneMarkers[droneID].setStyle({
+            color: color,
+            fillColor: color
+          });
         }
-      },
-
-      error: function(err) {
-        console.log("Error fetching drones", err);
-      },
-
-      complete: function() {
-        setTimeout(updateDrones, 1000); // 🔥 lite snällare än 100ms
       }
-    });
-  }
+    },
 
-  updateDrones();
+    complete: function(){
+      setTimeout(updateDrones, 1000);
+    }
+  });
+}
+
+updateDrones();
 
 </script>
 
