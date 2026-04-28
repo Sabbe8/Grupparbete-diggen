@@ -114,9 +114,18 @@ def get_drones():
     drones = {}
 
     for key in r.keys("drone:*"):
+
         data = r.get(key)
+
         if data:
-            drones[key] = json.loads(data)
+            drone = json.loads(data)
+
+            drones[drone["id"]] = {
+                "latitude": drone["latitude"],
+                "longitude": drone["longitude"],
+                "status": drone["status"],
+                "ip": drone.get("ip")
+            }
 
     return drones
 
