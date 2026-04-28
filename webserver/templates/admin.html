@@ -2,11 +2,9 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Admin</title>
+<title>Admin Map</title>
 
-<link rel="stylesheet"
-href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
@@ -31,7 +29,6 @@ body {
   background: white;
   padding: 15px;
   overflow-y: auto;
-  box-shadow: -5px 0 15px rgba(0,0,0,0.1);
 }
 
 .header {
@@ -47,18 +44,12 @@ body {
   margin-bottom: 10px;
   border-radius: 8px;
 }
-
-.busy { color: #e74c3c; }
-.idle { color: #2ecc71; }
 </style>
-
 </head>
 
 <body>
 
-<div class="header">
-TerraScan Admin
-</div>
+<div class="header">Admin Control</div>
 
 <div class="container">
 
@@ -75,60 +66,82 @@ TerraScan Admin
 
 var map = L.map('map').setView([55.81904, 13.42416], 15);
 
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
-maxZoom:19
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19
 }).addTo(map);
 
 var markers = {};
 
-function updateDrones(){
+// 🟢 CLICK ON MAP = SEND MISSION
+map.on('click', function(e) {
 
-$.ajax({
-url:'/get_drones',
-dataType:'json',
+    let lat = e.latlng.lat;
+    let lng = e.latlng.lng;
 
-success:function(data){
+    L.marker([lat, lng]).addTo(map)
+      .bindPopup("Mission point")
+      .openPopup();
 
-let html="";
-
-for(const id in data){
-
-let d=data[id];
-
-let lat=parseFloat(d.latitude);
-let lon=parseFloat(d.longitude);
-let status=d.status;
-
-let color=status==="idle"?"#2ecc71":"#e74c3c";
-
-if(!markers[id]){
-markers[id]=L.circleMarker([lat,lon],{
-radius:8,
-color:color,
-fillColor:color,
-fillOpacity:0.9
-}).addTo(map);
-}else{
-markers[id].setLatLng([lat,lon]);
-markers[id].setStyle({color,fillColor:color});
-}
-
-html+=`
-<div class="drone">
-<b>Drone ${id}</b><br>
-Status: <span class="${status}">${status}</span><br>
-Lat: ${lat.toFixed(4)}<br>
-Lon: ${lon.toFixed(4)}<br>
-IP: ${d.ip}
-</div>
-`;
-}
-
-document.getElementById("droneList").innerHTML=html;
-}
+    $.ajax({
+        url: "/admin/send_mission",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({
+            lat: lat,
+            lng: lng
+        }),
+        success: function(res) {
+            alert("Mission sent!");
+        }
+    });
 });
 
-setTimeout(updateDrones,1000);
+// 🔁 LIVE DRONES
+function updateDrones() {
+
+    $.ajax({
+        url: '/get_drones',
+        dataType: 'json',
+
+        success: function(data){
+
+            let html = "";
+
+            for (const id in data) {
+
+                let d = data[id];
+
+                let lat = parseFloat(d.latitude);
+                let lon = parseFloat(d.longitude);
+
+                let color = d.status === "idle" ? "#2ecc71" : "#e74c3c";
+
+                if (!markers[id]) {
+                    markers[id] = L.circleMarker([lat, lon], {
+                        radius: 8,
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.9
+                    }).addTo(map);
+                } else {
+                    markers[id].setLatLng([lat, lon]);
+                    markers[id].setStyle({color, fillColor: color});
+                }
+
+                html += `
+                    <div class="drone">
+                        <b>${id}</b><br>
+                        ${d.status}<br>
+                        ${lat.toFixed(4)}, ${lon.toFixed(4)}
+                    </div>
+                `;
+            }
+
+            document.getElementById("droneList").innerHTML = html;
+        }
+    });
+
+    setTimeout(updateDrones, 1000);
 }
 
 updateDrones();
