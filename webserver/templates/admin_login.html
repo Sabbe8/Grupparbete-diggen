@@ -1,21 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Login</title>
+<meta charset="utf-8">
+<title>Admin Login</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f3f7f4;
+  margin: 0;
+}
+
+.container {
+  width: 350px;
+  margin: 120px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #27ae60;
+}
+</style>
 </head>
 
-<body style="text-align:center; margin-top:100px;">
+<body>
+
+<div class="container">
 
 <h1>Admin Login</h1>
 
 <form method="POST">
-
-  <input name="username" placeholder="username"><br><br>
-  <input name="password" type="password" placeholder="password"><br><br>
-
-  <button type="submit">Login</button>
-
+<input name="username" placeholder="Username">
+<input name="password" type="password" placeholder="Password">
+<br>
+<button type="submit">Login</button>
 </form>
+
+</div>
 
 </body>
 </html>
