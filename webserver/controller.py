@@ -1,9 +1,8 @@
-import redis
 import requests
+import redis
 import json
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-
 
 def get_available_drone():
 
@@ -21,17 +20,17 @@ def send_mission(from_coords, to_coords):
     drone = get_available_drone()
 
     if not drone:
-        print("NO DRONE AVAILABLE")
+        print("No drone available")
         return
 
     ip = drone["ip"]
 
     url = f"http://{ip}:5000/"
 
-    print("CONTROLLER SEND")
-    print(from_coords, "→", to_coords)
-
-    requests.post(url, json={
-        "from": from_coords,
-        "to": to_coords
-    })
+    try:
+        requests.post(url, json={
+            "from": from_coords,
+            "to": to_coords
+        })
+    except Exception as e:
+        print("Error sending mission:", e)
