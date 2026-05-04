@@ -1,80 +1,81 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>TerraScan</title>
+<meta charset="utf-8">
+<title>TerraScan</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-  <style>
-    body {
-      margin: 0;
-      background: #eaf5ee;
-      font-family: Arial;
-    }
+<style>
+body {
+  margin: 0;
+  background: #eaf5ee;
+  font-family: Arial;
+}
 
-    #map {
-      height: 720px;
-      width: 1200px;
-      margin: 20px auto;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      border: 3px solid #2ecc71;
-    }
+/* 🔲 layout */
+.container {
+  display: flex;
+  height: 100vh;
+}
 
-    /* 📷 kamera */
-    #camera {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 320px;
-      height: 240px;
-      background: black;
-      border-radius: 10px;
-      overflow: hidden;
-      z-index: 9999;
-      display: none;
-    }
+/* 🗺️ karta */
+#map {
+  flex: 2;
+}
 
-    #camera img {
-      width: 100%;
-    }
+/* 📷 kamera panel */
+#cameraPanel {
+  flex: 1;
+  background: #ffffff;
+  border-left: 3px solid #2ecc71;
+  padding: 15px;
+  box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+}
 
-    #closeCam {
-      position: absolute;
-      top: 5px;
-      right: 8px;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
+#cameraPanel h3 {
+  color: #1f7a4d;
+}
 
-    .admin-btn {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      background: #2ecc71;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      text-decoration: none;
-      z-index: 9999;
-    }
-  </style>
+/* 📷 video */
+#cameraPanel img {
+  width: 100%;
+  border-radius: 10px;
+  background: black;
+}
+
+/* admin knapp */
+.admin-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background: #2ecc71;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-decoration: none;
+  z-index: 9999;
+}
+</style>
 </head>
 
 <body>
 
 <a href="/admin/login" class="admin-btn">Admin</a>
 
-<div id="map"></div>
+<div class="container">
 
-<!-- 📷 CAMERA WINDOW -->
-<div id="camera">
-  <div id="closeCam" onclick="closeCamera()">X</div>
-  <img id="stream">
+  <!-- 🗺️ MAP -->
+  <div id="map"></div>
+
+  <!-- 📷 CAMERA PANEL -->
+  <div id="cameraPanel">
+    <h3>Drone Camera</h3>
+    <img id="stream" src="" alt="No camera selected">
+  </div>
+
 </div>
 
 <script>
@@ -87,17 +88,13 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 var droneMarkers = {};
 
+// 📷 öppna kamera
 function openCamera(ip) {
-  document.getElementById("camera").style.display = "block";
   document.getElementById("stream").src =
-      "http://" + ip + ":8000/video";
+    "http://" + ip + ":5001/video_feed";
 }
 
-function closeCamera() {
-  document.getElementById("camera").style.display = "none";
-  document.getElementById("stream").src = "";
-}
-
+// 🔁 uppdatera drönare
 function updateDrones() {
 
   $.ajax({
@@ -115,11 +112,13 @@ function updateDrones() {
         var status = drone.status;
         var ip = drone.ip;
 
+        if (isNaN(lat) || isNaN(lon)) continue;
+
         var color = (status === "idle") ? "#2ecc71" : "#e74c3c";
 
         if (!droneMarkers[droneID]) {
 
-          var marker = L.circleMarker([lat, lon], {
+          let marker = L.circleMarker([lat, lon], {
             radius: 9,
             color: color,
             fillColor: color,
@@ -129,7 +128,7 @@ function updateDrones() {
 
           marker.bindPopup("Drone " + droneID);
 
-          // 📷 klicka för kamera
+          // 📷 klick → visa kamera
           marker.on("click", function() {
             openCamera(ip);
           });
