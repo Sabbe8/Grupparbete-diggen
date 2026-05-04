@@ -6,6 +6,7 @@ from controller import send_mission
 
 app = Flask(__name__)
 
+# 🟢 CENTRAL REDIS (DIN DATOR)
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 # ========================
@@ -18,7 +19,7 @@ USERS = {
 }
 
 # ========================
-# FASTA RUTTER
+# ROUTES
 # ========================
 ROUTES = {
     "anna": {"from": (13.42416, 55.81904), "to": (13.4156, 55.8251)},
@@ -31,6 +32,7 @@ ROUTES = {
 # ========================
 @app.route('/', methods=['GET', 'POST'])
 def login():
+
     if request.method == 'POST':
         user = request.form.get('username')
         pw = request.form.get('password')
@@ -50,18 +52,14 @@ def order_page(farmer):
 
 
 # ========================
-# SEND ORDER (FIXED)
+# SEND ORDER
 # ========================
 @app.route('/send_order/<farmer>', methods=['POST'])
 def send_order(farmer):
 
     route = ROUTES[farmer]
 
-    from_coord = route["from"]
-    to_coord = route["to"]
-
-    # 👉 skickar till controller (som i sin tur startar fly_to)
-    send_mission(from_coord, to_coord)
+    send_mission(route["from"], route["to"])
 
     return redirect(url_for('map_page'))
 
@@ -75,7 +73,7 @@ def map_page():
 
 
 # ========================
-# ADMIN PAGE
+# ADMIN
 # ========================
 @app.route('/admin')
 def admin():
@@ -91,7 +89,7 @@ def admin():
 
 
 # ========================
-# API - DRONES (LIVE DATA)
+# API DRONES
 # ========================
 @app.route('/get_drones')
 def get_drones():
@@ -102,51 +100,13 @@ def get_drones():
         data = r.get(key)
         if data:
             d = json.loads(data)
-
-            drones[d["id"]] = {
-                "id": d["id"],
-                "latitude": d["latitude"],
-                "longitude": d["longitude"],
-                "status": d["status"],
-                "ip": d.get("ip", "")
-            }
+            drones[d["id"]] = d
 
     return jsonify(drones)
-
-
-# ========================
-# ADMIN SEND MISSION (KARTA-KLICK)
-# ========================
-@app.route('/admin/send_mission', methods=['POST'])
-def admin_send_mission():
-
-    data = request.json
-
-    lat = data["lat"]
-    lng = data["lng"]
-
-    # hitta ledig drone
-    drone = None
-
-    for key in r.keys("drone:*"):
-        d = json.loads(r.get(key))
-        if d["status"] == "idle":
-            drone = d
-            break
-
-    if not drone:
-        return jsonify({"status": "no drone available"})
-
-    from_coord = (drone["latitude"], drone["longitude"])
-    to_coord = (lat, lng)
-
-    send_mission(from_coord, to_coord)
-
-    return jsonify({"status": "sent"})
 
 
 # ========================
 # START
 # ========================
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
