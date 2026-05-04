@@ -15,7 +15,7 @@ def get_available_drone():
 
         drone = json.loads(data)
 
-        if drone.get("status") == "idle":
+        if drone["status"] == "idle":
             return drone
 
     return None
@@ -29,16 +29,13 @@ def send_mission(from_coords, to_coords):
         print("No drone available")
         return
 
-    drone_id = drone["id"]
     drone_ip = drone["ip"]
 
-    # markera busy i redis
     drone["status"] = "busy"
-    r.set(f"drone:{drone_id}", json.dumps(drone))
+    r.set(f"drone:{drone['id']}", json.dumps(drone))
 
-    print("Sending mission to drone:", drone_id)
+    print("Sending to:", drone_ip)
 
-    # 👉 SKICKA TILL RASPBERRY PI
     try:
         requests.post(
             f"http://{drone_ip}:5000/move",
@@ -46,7 +43,7 @@ def send_mission(from_coords, to_coords):
                 "from": from_coords,
                 "to": to_coords
             },
-            timeout=3
+            timeout=5
         )
     except Exception as e:
-        print("Drone unreachable:", e)
+        print("Error:", e)
