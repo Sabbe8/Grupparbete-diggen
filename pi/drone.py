@@ -6,36 +6,42 @@ from simulator import fly_to
 
 app = Flask(__name__)
 
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+# 🟢 CONNECT TO YOUR COMPUTER (Redis server)
+r = redis.Redis(
+    host="192.168.0.2",
+    port=6379,
+    decode_responses=True
+)
 
 DRONE_ID = "1"
 
-# startposition
 lat = 55.81904
 lon = 13.42416
 
+ip = "192.168.0.10"
 
-# =========================
+
+# ========================
 # REGISTER DRONE
-# =========================
+# ========================
 def register(status="idle"):
     r.set(f"drone:{DRONE_ID}", json.dumps({
         "id": DRONE_ID,
         "latitude": lat,
         "longitude": lon,
         "status": status,
-        "ip": "192.168.0.10"
+        "ip": ip
     }))
 
 
 register("idle")
 
 
-# =========================
+# ========================
 # RECEIVE MISSION
-# =========================
-@app.route('/', methods=['POST'])
-def mission():
+# ========================
+@app.route('/move', methods=['POST'])
+def move():
 
     data = request.json
 
@@ -52,8 +58,10 @@ def mission():
     return "OK"
 
 
-# =========================
-# START SERVER
-# =========================
+# ========================
+# START
+# ========================
 if __name__ == '__main__':
+    print("Drone running...")
+    register("idle")
     app.run(host="0.0.0.0", port=5000)
