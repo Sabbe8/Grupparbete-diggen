@@ -2,11 +2,12 @@ from flask import Flask, request
 import redis
 import json
 import threading
+import traceback
 from simulator import fly_to
 
 app = Flask(__name__)
 
-# 🟢 CONNECT TO YOUR COMPUTER (Redis server)
+# 🟢 Redis på din dator
 r = redis.Redis(
     host="192.168.0.2",
     port=6379,
@@ -22,46 +23,55 @@ ip = "192.168.0.10"
 
 
 # ========================
-# REGISTER DRONE
+# REGISTER
 # ========================
 def register(status="idle"):
-    r.set(f"drone:{DRONE_ID}", json.dumps({
-        "id": DRONE_ID,
-        "latitude": lat,
-        "longitude": lon,
-        "status": status,
-        "ip": ip
-    }))
+    try:
+        r.set(f"drone:{DRONE_ID}", json.dumps({
+            "id": DRONE_ID,
+            "latitude": lat,
+            "longitude": lon,
+            "status": status,
+            "ip": ip
+        }))
+    except Exception as e:
+        print("Redis error:", e)
 
 
 register("idle")
 
 
 # ========================
-# RECEIVE MISSION
+# MOVE DRONE
 # ========================
 @app.route('/move', methods=['POST'])
 def move():
 
-    data = request.json
+    try:
+        data = request.json
 
-    from_coord = data["from"]
-    to_coord = data["to"]
+        from_coord = data["from"]
+        to_coord = data["to"]
 
-    register("busy")
+        register("busy")
 
-    threading.Thread(
-        target=fly_to,
-        args=(DRONE_ID, from_coord, to_coord, r)
-    ).start()
+        threading.Thread(
+            target=fly_to,
+            args=(DRONE_ID, from_coord, to_coord, r)
+        ).start()
 
-    return "OK"
+        return "OK"
+
+    except Exception as e:
+        print("DRONE ERROR:")
+        traceback.print_exc()
+        return "error", 500
 
 
 # ========================
 # START
 # ========================
 if __name__ == '__main__':
-    print("Drone running...")
+    print("Drone starting...")
     register("idle")
     app.run(host="0.0.0.0", port=5000)
