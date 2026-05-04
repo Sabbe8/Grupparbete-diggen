@@ -1,7 +1,6 @@
 import redis
 import json
-import threading
-from simulator import fly_to   # ✔ OK eftersom filen finns lokalt
+import requests
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
@@ -31,13 +30,23 @@ def send_mission(from_coords, to_coords):
         return
 
     drone_id = drone["id"]
+    drone_ip = drone["ip"]
 
+    # markera busy i redis
     drone["status"] = "busy"
     r.set(f"drone:{drone_id}", json.dumps(drone))
 
-    print("Starting mission:", drone_id)
+    print("Sending mission to drone:", drone_id)
 
-    threading.Thread(
-        target=fly_to,
-        args=(drone_id, from_coords, to_coords, r)
-    ).start()
+    # 👉 SKICKA TILL RASPBERRY PI
+    try:
+        requests.post(
+            f"http://{drone_ip}:5000/move",
+            json={
+                "from": from_coords,
+                "to": to_coords
+            },
+            timeout=3
+        )
+    except Exception as e:
+        print("Drone unreachable:", e)
