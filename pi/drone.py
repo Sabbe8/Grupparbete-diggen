@@ -6,19 +6,13 @@ from simulator import fly_to
 
 app = Flask(__name__)
 
-# ⚠️ VIKTIGT: denna måste peka på SAMMA Redis som webben använder
-r = redis.Redis(
-    host="192.168.0.2",  # ← din dator (webserver + Redis)
-    port=6379,
-    decode_responses=True
-)
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 DRONE_ID = "1"
 
 # startposition
 lat = 55.81904
 lon = 13.42416
-ip = "192.168.0.10"  # ← Johns Raspberry Pi IP
 
 
 # =========================
@@ -30,29 +24,26 @@ def register(status="idle"):
         "latitude": lat,
         "longitude": lon,
         "status": status,
-        "ip": ip
+        "ip": "192.168.0.10"
     }))
 
 
-# 🔥 register direkt vid start (VIKTIGT efter FLUSHALL)
 register("idle")
 
 
 # =========================
 # RECEIVE MISSION
 # =========================
-@app.route('/move', methods=['POST'])
-def move():
+@app.route('/', methods=['POST'])
+def mission():
 
     data = request.json
 
     from_coord = data["from"]
     to_coord = data["to"]
 
-    # markera busy i Redis
     register("busy")
 
-    # starta flygning i bakgrund
     threading.Thread(
         target=fly_to,
         args=(DRONE_ID, from_coord, to_coord, r)
@@ -62,17 +53,7 @@ def move():
 
 
 # =========================
-# HEALTH CHECK (valfri men bra)
-# =========================
-@app.route('/ping')
-def ping():
-    return "drone alive"
-
-
-# =========================
 # START SERVER
 # =========================
 if __name__ == '__main__':
-    print("Drone starting on Raspberry Pi...")
-    register("idle")
     app.run(host="0.0.0.0", port=5000)
