@@ -1,7 +1,6 @@
 import time
 import json
 
-
 def fly_to(drone_id, from_coord, to_coord, r):
 
     lat = from_coord[1]
@@ -15,7 +14,7 @@ def fly_to(drone_id, from_coord, to_coord, r):
     lat_step = (target_lat - lat) / steps
     lon_step = (target_lon - lon) / steps
 
-    for i in range(steps):
+    for _ in range(steps):
 
         lat += lat_step
         lon += lon_step
@@ -29,7 +28,6 @@ def fly_to(drone_id, from_coord, to_coord, r):
 
         time.sleep(0.2)
 
-    # landat
     r.set(f"drone:{drone_id}", json.dumps({
         "id": drone_id,
         "latitude": lat,
