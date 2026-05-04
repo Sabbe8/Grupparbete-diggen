@@ -1,7 +1,7 @@
 import redis
 import json
 import threading
-from simulator import fly_to
+from simulator import fly_to   # ✔ OK eftersom filen finns lokalt
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
@@ -32,11 +32,10 @@ def send_mission(from_coords, to_coords):
 
     drone_id = drone["id"]
 
-    # markera busy direkt
     drone["status"] = "busy"
     r.set(f"drone:{drone_id}", json.dumps(drone))
 
-    print("Starting mission for drone:", drone_id)
+    print("Starting mission:", drone_id)
 
     threading.Thread(
         target=fly_to,
