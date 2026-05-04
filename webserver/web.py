@@ -45,13 +45,13 @@ def send_order(farmer):
 
     route = ROUTES[farmer]
 
-    threading.Thread(
-        target=send_mission,
-        args=(route["from"], route["to"])
-    ).start()
+    from controller import send_mission
+
+    print("Sending mission...")
+
+    send_mission(route["from"], route["to"])
 
     return redirect(url_for('map_page'))
-
 
 # MAP
 @app.route('/map')
