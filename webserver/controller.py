@@ -1,6 +1,7 @@
-import requests
 import redis
 import json
+import threading
+from simulator import fly_to
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
@@ -29,26 +30,15 @@ def send_mission(from_coords, to_coords):
         print("No drone available")
         return
 
-    ip = drone.get("ip", "").replace("!", "")
+    drone_id = drone["id"]
 
-    # 🧠 simulator-mode (ingen riktig drone)
-    if not ip:
-        print("Simulator drone, skipping HTTP request")
-        return
-
-    # sätt busy
+    # markera busy direkt
     drone["status"] = "busy"
-    r.set(f"drone:{drone['id']}", json.dumps(drone))
+    r.set(f"drone:{drone_id}", json.dumps(drone))
 
-    url = f"http://{ip}:5000/"
+    print("Starting mission for drone:", drone_id)
 
-    print(f"Sending mission to {url}")
-
-    try:
-        requests.post(url, json={
-            "from": from_coords,
-            "to": to_coords
-        }, timeout=3)
-
-    except Exception as e:
-        print("Error sending mission:", e)
+    threading.Thread(
+        target=fly_to,
+        args=(drone_id, from_coords, to_coords, r)
+    ).start()
