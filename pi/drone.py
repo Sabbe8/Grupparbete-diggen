@@ -18,13 +18,14 @@ ip = "192.168.0.10"
 lat = 55.81904
 lon = 13.42416
 
-def register(status="idle"):
+def register(status="idle", owner=None):
     r.set(f"drone:{DRONE_ID}", json.dumps({
         "id": DRONE_ID,
         "latitude": lat,
         "longitude": lon,
         "status": status,
-        "ip": ip
+        "ip": ip,
+        "owner": owner
     }))
 
 register("idle")
@@ -36,12 +37,13 @@ def move():
     from_coord = data["from"]
     area = data["area"]
     problem = data.get("problem")
+    owner = data.get("owner")
 
-    register("busy")
+    register("busy", owner)
 
     threading.Thread(
         target=fly_to,
-        args=(DRONE_ID, from_coord, area, problem, r, ip)
+        args=(DRONE_ID, from_coord, area, problem, r, ip, owner)
     ).start()
 
     return "OK"
