@@ -32,14 +32,16 @@ register("idle")
 @app.route('/move', methods=['POST'])
 def move():
     data = request.json
+
     from_coord = data["from"]
-    to_coord = data["to"]
+    area = data["area"]
+    problem = data.get("problem")
 
     register("busy")
 
     threading.Thread(
         target=fly_to,
-        args=(DRONE_ID, from_coord, to_coord, r, ip)
+        args=(DRONE_ID, from_coord, area, problem, r, ip)
     ).start()
 
     return "OK"

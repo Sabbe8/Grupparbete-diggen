@@ -9,20 +9,25 @@ def get_available_drone():
         data = r.get(key)
         if not data:
             continue
+
         drone = json.loads(data)
+
         if drone["status"] == "idle":
             return drone
+
     return None
 
-def send_mission(from_coords, to_coords):
+
+def send_mission(from_coords, area, problem=None):
     drone = get_available_drone()
+
     if not drone:
         print("No drone available")
         return
 
     drone_ip = drone["ip"]
 
-    # Markera som busy
+    # Markera som busy direkt så ingen annan mission tar samma drönare
     drone["status"] = "busy"
     r.set(f"drone:{drone['id']}", json.dumps(drone))
 
@@ -31,8 +36,13 @@ def send_mission(from_coords, to_coords):
     try:
         requests.post(
             f"http://{drone_ip}:5000/move",
-            json={"from": from_coords, "to": to_coords},
+            json={
+                "from": from_coords,
+                "area": area,
+                "problem": problem
+            },
             timeout=5
         )
+
     except Exception as e:
         print("Error:", e)

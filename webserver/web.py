@@ -27,7 +27,7 @@ ADMIN_PASS = "1234"
 # ========================
 # ROUTES
 # ========================
-STATION = (13.42416, 55.81904)  # lon, lat
+
 
 STATION = (13.42416, 55.81904)  # lon, lat
 
@@ -114,10 +114,14 @@ def order_page(farmer):
 def send_order(farmer):
 
     route = ROUTES[farmer]
-    send_mission(route["from"], route["to"])
+
+    send_mission(
+        route["from"],
+        route["area"],
+        route["problem"]
+    )
 
     return redirect(url_for('map_page'))
-
 
 # ========================
 # MAP
@@ -156,28 +160,24 @@ def admin_send_mission():
     lat = data["lat"]
     lng = data["lng"]
 
-    # Hitta första lediga drönare
-    drone = None
-    for key in r.keys("drone:*"):
-        d = json.loads(r.get(key))
-        if d["status"] == "idle":
-            drone = d
-            break
+    # Skapa ett litet fyrkantigt fält runt klicket
+    size_lon = 0.0015
+    size_lat = 0.0010
 
-    if not drone:
-        return "No drone available", 400
+    area = [
+        (lng - size_lon, lat - size_lat),
+        (lng + size_lon, lat - size_lat),
+        (lng + size_lon, lat + size_lat),
+        (lng - size_lon, lat + size_lat)
+    ]
 
-    # Skicka uppdrag till drönaren
-    try:
-        import requests
-        requests.post(
-            f"http://{drone['ip']}:5000/move",
-            json={"from": [drone["longitude"], drone["latitude"]],
-                  "to": [lng, lat]},
-            timeout=5
-        )
-    except:
-        return "Failed", 500
+    problem = (lng, lat)
+
+    send_mission(
+        STATION,
+        area,
+        problem
+    )
 
     return "OK"
 
