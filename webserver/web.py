@@ -78,6 +78,7 @@ def login():
         pw = request.form.get('password')
 
         if user in USERS and USERS[user] == pw:
+            session["farmer"] = user
             return redirect(url_for('order_page', farmer=user))
 
     return render_template('login.html')
@@ -117,9 +118,10 @@ def send_order(farmer):
     route = ROUTES[farmer]
 
     send_mission(
-        route["from"],
-        route["area"],
-        route["problem"]
+    route["from"],
+    route["area"],
+    route["problem"],
+    owner=farmer
     )
 
     return redirect(url_for('map_page'))
@@ -191,14 +193,25 @@ def get_drones():
 
     drones = {}
 
+    current_user = session.get("farmer")
+    is_admin = session.get("admin")
+
     for key in r.keys("drone:*"):
         data = r.get(key)
+
         if data:
             d = json.loads(data)
-            drones[d["id"]] = d
+
+            # Admin ser alla drönare
+            if is_admin:
+                drones[d["id"]] = d
+
+            # Vanlig användare ser bara sin egen aktiva drönare
+            else:
+                if d.get("owner") == current_user:
+                    drones[d["id"]] = d
 
     return jsonify(drones)
-
 
 # ========================
 # START

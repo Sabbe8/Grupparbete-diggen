@@ -17,8 +17,7 @@ def get_available_drone():
 
     return None
 
-
-def send_mission(from_coords, area, problem=None):
+def send_mission(from_coords, area, problem=None, owner=None):
     drone = get_available_drone()
 
     if not drone:
@@ -27,11 +26,13 @@ def send_mission(from_coords, area, problem=None):
 
     drone_ip = drone["ip"]
 
-    # Markera som busy direkt så ingen annan mission tar samma drönare
+    # Markera som busy och koppla till användare
     drone["status"] = "busy"
+    drone["owner"] = owner
+
     r.set(f"drone:{drone['id']}", json.dumps(drone))
 
-    print("Sending mission to:", drone_ip)
+    print("Sending mission to:", drone_ip, "Owner:", owner)
 
     try:
         requests.post(
@@ -39,7 +40,8 @@ def send_mission(from_coords, area, problem=None):
             json={
                 "from": from_coords,
                 "area": area,
-                "problem": problem
+                "problem": problem,
+                "owner": owner
             },
             timeout=5
         )
