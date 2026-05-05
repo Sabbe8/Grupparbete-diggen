@@ -13,8 +13,8 @@ def fly_to(drone_id, from_coord, to_coord, r, ip):
     target_lon = to_coord[0]
 
     # Lite snabbare men fortfarande mjukt
-    steps = 200
-    sleep_time = 0.08
+    steps = 400
+    sleep_time = 0.03
 
     lat_step = (target_lat - lat) / steps
     lon_step = (target_lon - lon) / steps
