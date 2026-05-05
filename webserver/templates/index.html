@@ -73,7 +73,7 @@ body {
 
   <div id="cameraPanel">
     <h3>Drone Camera</h3>
-    <img id="stream" src="" alt="No camera selected">
+    <img id="stream" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1" alt="No camera selected">
   </div>
 
 </div>
@@ -90,9 +90,12 @@ var droneMarkers = {};
 
 
 function openCamera(ip) {
-<iframe width="420" height="315"
-src="https://www.youtube.com/embed/tgbNymZ7vqY?autoplay=1&mute=1">
-</iframe>
+  document.getElementById("stream").src =
+<<<<<<< HEAD
+    "http://" + ip + ":5001/video_feed"
+=======
+    "http://" + ip + ":5001/video_feed";
+>>>>>>> f33b3b138d098246b7cc54d5c2c68115bdb65ed9
 }
 
 
