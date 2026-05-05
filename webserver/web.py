@@ -112,4 +112,63 @@ def admin_send_mission():
     # Skicka uppdrag
     try:
         requests.post(
-            f"http://{drone['ip']}:5000/move
+            f"http://{drone['ip']}:5000/move",
+            json={"from": [drone["longitude"], drone["latitude"]],
+                  "to": [lng, lat]},
+            timeout=5
+        )
+    except:
+        return "Failed", 500
+
+    return "OK"
+
+
+# ---------------------------------------------------------
+# DRONE DATA API
+# ---------------------------------------------------------
+
+@app.route('/get_drones')
+def get_drones():
+    drones = {}
+    for key in r.keys("drone:*"):
+        data = r.get(key)
+        if data:
+            d = json.loads(data)
+            drones[d["id"]] = d
+    return jsonify(drones)
+
+
+# ---------------------------------------------------------
+# SEND MISSION (used by user orders)
+# ---------------------------------------------------------
+
+def send_mission(from_coords, to_coords):
+
+    # Hitta ledig drönare
+    drone = None
+    for key in r.keys("drone:*"):
+        d = json.loads(r.get(key))
+        if d["status"] == "idle":
+            drone = d
+            break
+
+    if not drone:
+        print("No drone available")
+        return
+
+    drone_ip = drone["ip"]
+
+    try:
+        requests.post(
+            f"http://{drone_ip}:5000/move",
+            json={"from": from_coords, "to": to_coords},
+            timeout=5
+        )
+    except Exception as e:
+        print("Error:", e)
+
+
+# ---------------------------------------------------------
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000, debug=True)
