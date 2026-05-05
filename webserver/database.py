@@ -3,14 +3,11 @@ import redis
 import json
 
 app = Flask(__name__)
-
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+r = redis.Redis(host='192.168.0.2', port=6379, decode_responses=True)
 
 @app.route('/drone', methods=['POST'])
 def update_drone():
-
     data = request.json
-
     drone_id = data['id']
 
     drone_info = {
@@ -18,11 +15,10 @@ def update_drone():
         "longitude": data['longitude'],
         "latitude": data['latitude'],
         "status": data['status'],
-        "ip": request.remote_addr   # 🔥 viktigt!
+        "ip": request.remote_addr
     }
 
     r.set(f"drone:{drone_id}", json.dumps(drone_info))
-
     return "OK"
 
 if __name__ == '__main__':
