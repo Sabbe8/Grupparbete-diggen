@@ -5,7 +5,7 @@ import threading
 from controller import send_mission
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"   # behövs för sessioner
+app.secret_key = "supersecretkey"   # behövs för admin-login
 
 r = redis.Redis(host='192.168.0.2', port=6379, decode_responses=True)
 
@@ -81,7 +81,6 @@ def order_page(farmer):
 def send_order(farmer):
 
     route = ROUTES[farmer]
-
     send_mission(route["from"], route["to"])
 
     return redirect(url_for('map_page'))
@@ -112,6 +111,42 @@ def admin():
             drones[key] = json.loads(data)
 
     return render_template('admin.html', drones=drones)
+
+
+# ========================
+# ADMIN SEND MISSION
+# ========================
+@app.route('/admin/send_mission', methods=['POST'])
+def admin_send_mission():
+
+    data = request.json
+    lat = data["lat"]
+    lng = data["lng"]
+
+    # Hitta första lediga drönare
+    drone = None
+    for key in r.keys("drone:*"):
+        d = json.loads(r.get(key))
+        if d["status"] == "idle":
+            drone = d
+            break
+
+    if not drone:
+        return "No drone available", 400
+
+    # Skicka uppdrag till drönaren
+    try:
+        import requests
+        requests.post(
+            f"http://{drone['ip']}:5000/move",
+            json={"from": [drone["longitude"], drone["latitude"]],
+                  "to": [lng, lat]},
+            timeout=5
+        )
+    except:
+        return "Failed", 500
+
+    return "OK"
 
 
 # ========================
