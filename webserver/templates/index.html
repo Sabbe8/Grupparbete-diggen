@@ -15,18 +15,18 @@ body {
   font-family: Arial;
 }
 
-/* 🔲 layout */
+
 .container {
   display: flex;
   height: 100vh;
 }
 
-/* 🗺️ karta */
+
 #map {
   flex: 2;
 }
 
-/* 📷 kamera panel */
+
 #cameraPanel {
   flex: 1;
   background: #ffffff;
@@ -39,14 +39,14 @@ body {
   color: #1f7a4d;
 }
 
-/* 📷 video */
+
 #cameraPanel img {
   width: 100%;
   border-radius: 10px;
   background: black;
 }
 
-/* admin knapp */
+
 .admin-btn {
   position: fixed;
   top: 15px;
@@ -67,10 +67,10 @@ body {
 
 <div class="container">
 
-  <!-- 🗺️ MAP -->
+
   <div id="map"></div>
 
-  <!-- 📷 CAMERA PANEL -->
+
   <div id="cameraPanel">
     <h3>Drone Camera</h3>
     <img id="stream" src="" alt="No camera selected">
@@ -88,13 +88,13 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 var droneMarkers = {};
 
-// 📷 öppna kamera
+
 function openCamera(ip) {
   document.getElementById("stream").src =
     "http://" + ip + ":5001/video_feed";
 }
 
-// 🔁 uppdatera drönare
+
 function updateDrones() {
 
   $.ajax({
@@ -128,7 +128,7 @@ function updateDrones() {
 
           marker.bindPopup("Drone " + droneID);
 
-          // 📷 klick → visa kamera
+  
           marker.on("click", function() {
             openCamera(ip);
           });
