@@ -1,10 +1,11 @@
-from flask import Flask, request, render_template, redirect, url_for, jsonify
+from flask import Flask, request, render_template, redirect, url_for, jsonify, session
 import redis
 import json
 import threading
 from controller import send_mission
 
 app = Flask(__name__)
+app.secret_key = "supersecretkey"   # behövs för sessioner
 
 r = redis.Redis(host='192.168.0.2', port=6379, decode_responses=True)
 
@@ -16,6 +17,12 @@ USERS = {
     "erik": "erikpwd",
     "lisa": "lisapwd"
 }
+
+# ========================
+# ADMIN USER
+# ========================
+ADMIN_USER = "admin"
+ADMIN_PASS = "1234"
 
 # ========================
 # ROUTES
@@ -40,6 +47,23 @@ def login():
             return redirect(url_for('order_page', farmer=user))
 
     return render_template('login.html')
+
+
+# ========================
+# ADMIN LOGIN
+# ========================
+@app.route('/admin_login', methods=['GET', 'POST'])
+def admin_login():
+
+    if request.method == 'POST':
+        user = request.form.get('username')
+        pw = request.form.get('password')
+
+        if user == ADMIN_USER and pw == ADMIN_PASS:
+            session['admin'] = True
+            return redirect(url_for('admin'))
+
+    return render_template('admin_login.html')
 
 
 # ========================
@@ -72,10 +96,13 @@ def map_page():
 
 
 # ========================
-# ADMIN
+# ADMIN PAGE (protected)
 # ========================
 @app.route('/admin')
 def admin():
+
+    if not session.get('admin'):
+        return redirect(url_for('admin_login'))
 
     drones = {}
 
