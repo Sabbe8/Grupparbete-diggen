@@ -2,17 +2,14 @@ import time
 import json
 
 
-def save_drone(drone_id, lat, lon, status, r, ip):
-    """
-    Sparar drönarens position/status i Redis.
-    Webbsidan läser detta via /get_drones.
-    """
+def save_drone(drone_id, lat, lon, status, r, ip, owner=None):
     r.set(f"drone:{drone_id}", json.dumps({
         "id": drone_id,
         "latitude": lat,
         "longitude": lon,
         "status": status,
-        "ip": ip
+        "ip": ip,
+        "owner": owner
     }))
 
 
@@ -49,7 +46,7 @@ def order_area_from_nearest_corner(start, area):
     return ordered
 
 
-def move_smooth(drone_id, start_lon, start_lat, target_lon, target_lat, r, ip):
+def move_smooth(drone_id, start_lon, start_lat, target_lon, target_lat, r, ip, owner=None):
     """
     Flyttar drönaren mjukt mellan två punkter.
     """
@@ -65,13 +62,12 @@ def move_smooth(drone_id, start_lon, start_lat, target_lon, target_lat, r, ip):
 
         lon = start_lon + (target_lon - start_lon) * smooth_t
         lat = start_lat + (target_lat - start_lat) * smooth_t
-
-        save_drone(drone_id, lat, lon, "busy", r, ip)
+        save_drone(drone_id, lat, lon, "busy", r, ip, owner)
 
         time.sleep(sleep_time)
 
 
-def fly_to(drone_id, from_coord, area, problem, r, ip):
+def fly_to(drone_id, from_coord, area, problem, r, ip, owner=None):
     """
     Huvudfunktionen för drönarens flygning.
 
@@ -103,7 +99,8 @@ def fly_to(drone_id, from_coord, area, problem, r, ip):
             target_lon,
             target_lat,
             r,
-            ip
+            ip,
+            owner
         )
 
         current_lon = target_lon
@@ -124,4 +121,4 @@ def fly_to(drone_id, from_coord, area, problem, r, ip):
     )
 
     # Klar, tillbaka vid stationen
-    save_drone(drone_id, station_lat, station_lon, "idle", r, ip)
+    save_drone(drone_id, station_lat, station_lon, "idle", r, ip, None)
