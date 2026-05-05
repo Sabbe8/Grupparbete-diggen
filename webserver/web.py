@@ -91,25 +91,4 @@ def admin_dashboard():
     return render_template('admin.html', drones=drones)
 
 
-@app.route('/admin/send_mission', methods=['POST'])
-def admin_send_mission():
-
-    data = request.json
-    lat = data["lat"]
-    lng = data["lng"]
-
-    # Hitta första lediga drönare
-    drone = None
-    for key in r.keys("drone:*"):
-        d = json.loads(r.get(key))
-        if d["status"] == "idle":
-            drone = d
-            break
-
-    if not drone:
-        return "No drone available", 400
-
-    # Skicka uppdrag
-    try:
-        requests.post(
-            f"http://{drone['ip']}:5000/move
+@app.route
