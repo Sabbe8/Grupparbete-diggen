@@ -117,7 +117,8 @@ def fly_to(drone_id, from_coord, area, problem, r, ip, owner=None):
         station_lon,
         station_lat,
         r,
-        ip
+        ip,
+        owner
     )
 
     # Klar, tillbaka vid stationen
