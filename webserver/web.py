@@ -6,8 +6,7 @@ from controller import send_mission
 
 app = Flask(__name__)
 
-# 🟢 CENTRAL REDIS (DIN DATOR)
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+r = redis.Redis(host='192.168.0.2', port=6379, decode_responses=True)
 
 # ========================
 # USERS
