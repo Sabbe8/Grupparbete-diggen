@@ -5,28 +5,22 @@ import threading
 from controller import send_mission
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"   # behövs för admin-login
+app.secret_key = "supersecretkey"   
 
 r = redis.Redis(host='192.168.0.2', port=6379, decode_responses=True)
 
-# ========================
-# USERS
-# ========================
+
 USERS = {
     "anna": "pass123",
     "erik": "erikpwd",
     "lisa": "lisapwd"
 }
 
-# ========================
-# ADMIN USER
-# ========================
+
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
-# ========================
-# ROUTES
-# ========================
+
 
 
 STATION = (13.42416, 55.81904)  # lon, lat
@@ -67,9 +61,7 @@ ROUTES = {
     }
 }
 
-# ========================
-# LOGIN
-# ========================
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
 
@@ -84,9 +76,7 @@ def login():
     return render_template('login.html')
 
 
-# ========================
-# ADMIN LOGIN
-# ========================
+
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
 
@@ -101,17 +91,12 @@ def admin_login():
     return render_template('admin_login.html')
 
 
-# ========================
-# ORDER PAGE
-# ========================
+
 @app.route('/order/<farmer>')
 def order_page(farmer):
     return render_template('order.html', farmer=farmer)
 
 
-# ========================
-# SEND ORDER
-# ========================
 @app.route('/send_order/<farmer>', methods=['POST'])
 def send_order(farmer):
 
@@ -126,17 +111,12 @@ def send_order(farmer):
 
     return redirect(url_for('map_page'))
 
-# ========================
-# MAP
-# ========================
+
 @app.route('/map')
 def map_page():
     return render_template('index.html')
 
 
-# ========================
-# ADMIN PAGE (protected)
-# ========================
 @app.route('/admin')
 def admin():
 
@@ -153,9 +133,7 @@ def admin():
     return render_template('admin.html', drones=drones)
 
 
-# ========================
-# ADMIN SEND MISSION
-# ========================
+
 @app.route('/admin/send_mission', methods=['POST'])
 def admin_send_mission():
 
@@ -185,9 +163,7 @@ def admin_send_mission():
     return "OK"
 
 
-# ========================
-# API DRONES
-# ========================
+
 @app.route('/get_drones')
 def get_drones():
 
@@ -213,8 +189,6 @@ def get_drones():
 
     return jsonify(drones)
 
-# ========================
-# START
-# ========================
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
