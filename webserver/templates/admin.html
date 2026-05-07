@@ -100,7 +100,7 @@ map.on('click', function(e) {
 function updateDrones() {
 
     $.ajax({
-        url: '/get_drones',
+        url: '/get_all_drones',
         dataType: 'json',
 
         success: function(data){
