@@ -108,25 +108,23 @@ def admin_login():
 def order_page(farmer):
     return render_template('order.html', farmer=farmer)
 
-
 @app.route('/send_order/<farmer>', methods=['POST'])
 def send_order(farmer):
 
     route = ROUTES[farmer]
 
     send_mission(
-    route["from"],
-    route["area"],
-    route["problem"],
-    owner=farmer
+        route["from"],
+        route["area"],
+        route["problem"],
+        owner=farmer
     )
 
-    return redirect(url_for('map_page'))
+    return redirect(url_for('map_page', farmer=farmer))
 
-
-@app.route('/map')
-def map_page():
-    return render_template('index.html')
+@app.route('/map/<farmer>')
+def map_page(farmer):
+    return render_template('index.html', farmer=farmer)
 
 
 @app.route('/admin')
@@ -176,13 +174,10 @@ def admin_send_mission():
 
 
 
-@app.route('/get_drones')
-def get_drones():
+@app.route('/get_drones/<farmer>')
+def get_drones_for_farmer(farmer):
 
     drones = {}
-
-    current_user = session.get("farmer")
-    is_admin = session.get("admin") is True
 
     for key in r.keys("drone:*"):
         data = r.get(key)
@@ -192,18 +187,7 @@ def get_drones():
 
         d = json.loads(data)
 
-        # Admin ser alltid alla drönare
-        if is_admin:
-            drones[d["id"]] = d
-            continue
-
-        # Om vanlig user inte är korrekt inloggad:
-        # visa INGET, annars kan owner=None matcha current_user=None
-        if current_user is None:
-            continue
-
-        # Vanlig användare ser bara drönare som faktiskt ägs av den användaren
-        if d.get("owner") == current_user:
+        if d.get("owner") == farmer:
             drones[d["id"]] = d
 
     return jsonify(drones)
