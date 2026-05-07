@@ -70,6 +70,7 @@ def login():
         pw = request.form.get('password')
 
         if user in USERS and USERS[user] == pw:
+            session.clear()
             session["farmer"] = user
             return redirect(url_for('order_page', farmer=user))
 
@@ -85,7 +86,8 @@ def admin_login():
         pw = request.form.get('password')
 
         if user == ADMIN_USER and pw == ADMIN_PASS:
-            session['admin'] = True
+            session.clear()
+            session["admin"] = True
             return redirect(url_for('admin'))
 
     return render_template('admin_login.html')
