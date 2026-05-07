@@ -14,10 +14,7 @@ def save_drone(drone_id, lat, lon, status, r, ip, owner=None):
 
 
 def distance(p1, p2):
-    """
-    Räknar enkel distans mellan två koordinater.
-    p = (longitude, latitude)
-    """
+
     lon1, lat1 = p1
     lon2, lat2 = p2
 
@@ -25,31 +22,22 @@ def distance(p1, p2):
 
 
 def order_area_from_nearest_corner(start, area):
-    """
-    Tar ett fält med fyra hörn.
-    Väljer det hörn som är närmast stationen/starten.
-    Sedan gör den en rutt runt hela fältet.
-    """
-
-    # Hitta vilket hörn som är närmast startpunkten
     nearest_index = min(
         range(len(area)),
         key=lambda i: distance(start, area[i])
     )
 
-    # Rotera listan så närmaste hörn kommer först
+
     ordered = area[nearest_index:] + area[:nearest_index]
 
-    # Lägg till första hörnet igen så fyrkanten stängs
+
     ordered.append(ordered[0])
 
     return ordered
 
 
 def move_smooth(drone_id, start_lon, start_lat, target_lon, target_lat, r, ip, owner=None):
-    """
-    Flyttar drönaren mjukt mellan två punkter.
-    """
+
 
     steps = 300
     sleep_time = 0.03
@@ -57,7 +45,6 @@ def move_smooth(drone_id, start_lon, start_lat, target_lon, target_lat, r, ip, o
     for i in range(steps + 1):
         t = i / steps
 
-        # Smoothstep = mjuk start och mjukt stopp
         smooth_t = t * t * (3 - 2 * t)
 
         lon = start_lon + (target_lon - start_lon) * smooth_t
@@ -68,26 +55,14 @@ def move_smooth(drone_id, start_lon, start_lat, target_lon, target_lat, r, ip, o
 
 
 def fly_to(drone_id, from_coord, area, problem, r, ip, owner=None):
-    """
-    Huvudfunktionen för drönarens flygning.
 
-    from_coord = station/startpunkt
-    area = användarens fält, fyra hörn
-    problem = röd punkt/skada, används senare i webben
 
-    Alla koordinater är:
-    (longitude, latitude)
-    """
-
-    # Startposition/station
     current_lon = from_coord[0]
     current_lat = from_coord[1]
 
-    # Skapa rutt:
-    # station -> närmaste hörn -> runt fältet -> tillbaka till station
     route = order_area_from_nearest_corner(from_coord, area)
 
-    # Flyg runt fältet
+
     for point in route:
         target_lon = point[0]
         target_lat = point[1]
@@ -106,7 +81,7 @@ def fly_to(drone_id, from_coord, area, problem, r, ip, owner=None):
         current_lon = target_lon
         current_lat = target_lat
 
-    # Flyg tillbaka till stationen
+
     station_lon = from_coord[0]
     station_lat = from_coord[1]
 

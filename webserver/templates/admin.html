@@ -72,7 +72,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 var markers = {};
 
-// 🟢 CLICK ON MAP = SEND MISSION
+
 map.on('click', function(e) {
 
     let lat = e.latlng.lat;
@@ -96,7 +96,7 @@ map.on('click', function(e) {
     });
 });
 
-// 🔁 LIVE DRONES
+
 function updateDrones() {
 
     $.ajax({
