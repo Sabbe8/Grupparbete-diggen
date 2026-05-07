@@ -12,7 +12,11 @@ def get_available_drone():
 
         drone = json.loads(data)
 
-        if drone["status"] == "idle":
+        status = drone.get("status")
+        owner = drone.get("owner")
+
+        # Välj bara drönare som är idle OCH inte ägs av någon
+        if status == "idle" and owner is None:
             return drone
 
     return None
