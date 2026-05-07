@@ -182,25 +182,31 @@ def get_drones():
     drones = {}
 
     current_user = session.get("farmer")
-    is_admin = session.get("admin")
+    is_admin = session.get("admin") is True
 
     for key in r.keys("drone:*"):
         data = r.get(key)
 
-        if data:
-            d = json.loads(data)
+        if not data:
+            continue
 
-            # Admin ser alla drönare
-            if is_admin:
-                drones[d["id"]] = d
+        d = json.loads(data)
 
-            # Vanlig användare ser bara sin egen aktiva drönare
-            else:
-                if d.get("owner") == current_user:
-                    drones[d["id"]] = d
+        # Admin ser alltid alla drönare
+        if is_admin:
+            drones[d["id"]] = d
+            continue
+
+        # Om vanlig user inte är korrekt inloggad:
+        # visa INGET, annars kan owner=None matcha current_user=None
+        if current_user is None:
+            continue
+
+        # Vanlig användare ser bara drönare som faktiskt ägs av den användaren
+        if d.get("owner") == current_user:
+            drones[d["id"]] = d
 
     return jsonify(drones)
-
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
