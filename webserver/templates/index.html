@@ -53,17 +53,11 @@ body {
   text-decoration: none;
   z-index: 9999;
 }
-.logga {
-  background: none;
-  width: 150px;
-}
 </style>
-  
 </head>
 
 <body>
 
-<!-- OBS: er backend-route heter /admin_login, inte /admin/login -->
 <a href="/admin_login" class="admin-btn">Admin</a>
 
 <div class="container">
@@ -72,33 +66,55 @@ body {
 
   <div id="cameraPanel">
     <h3>Drone Camera</h3>
-    <iframe id="ytFeed"
-          width="100%"
-          height="520"
-          style="border-radius:10px;"
-          src="https://www.youtube.com/embed/I51O5pa_JOY?autoplay=1&mute=1"
-          allowfullscreen>
-  </iframe>
-  <img src="{{ url_for('static', filename='images/logga_oval.jpg') }}" class="logga">
+    <img id="stream" src="" alt="No camera selected">
   </div>
 
 </div>
 
 <script>
 
-// ========================
-// MAP
-// ========================
 var map = L.map('map').setView([55.81904, 13.42416], 15);
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
 }).addTo(map);
 
+function loadFieldArea() {
+  $.ajax({
+    url: '/get_area/{{ farmer }}',
+    dataType: 'json',
 
-// ========================
-// DRONE MARKERS
-// ========================
+    success: function(data) {
+
+      if (!data.area) return;
+
+      var fieldCoords = data.area.map(function(point) {
+        return [point[1], point[0]];
+      });
+
+      L.polygon(fieldCoords, {
+        color: "#8b6b3f",
+        weight: 3,
+        fillColor: "#cbb58b",
+        fillOpacity: 0.45
+      }).addTo(map).bindPopup("Field area");
+
+      if (data.problem) {
+        var problem = data.problem;
+
+        L.circleMarker([problem[1], problem[0]], {
+          radius: 8,
+          color: "red",
+          fillColor: "red",
+          fillOpacity: 0.95
+        }).addTo(map).bindPopup("Detected problem");
+      }
+    }
+  });
+}
+
+loadFieldArea();
+
 var droneMarkers = {};
 
 function openCamera(ip) {
@@ -114,10 +130,6 @@ function updateDrones() {
 
     success: function(data){
 
-      // VIKTIGT:
-      // Ta bort drönare som inte längre finns i svaret från backend.
-      // Annars kan gamla drönare ligga kvar på kartan även om användaren
-      // egentligen inte ska se dem.
       for (const existingID in droneMarkers) {
         if (!(existingID in data)) {
           map.removeLayer(droneMarkers[existingID]);
@@ -125,7 +137,6 @@ function updateDrones() {
         }
       }
 
-      // Lägg till eller uppdatera de drönare som backend skickar
       for (const droneID in data){
 
         var drone = data[droneID];

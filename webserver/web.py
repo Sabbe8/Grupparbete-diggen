@@ -17,7 +17,7 @@ USERS = {
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
-STATION = (13.42416, 55.81904)  # lon, lat
+STATION = (13.42416, 55.81904)
 
 ROUTES = {
     "anna": {
@@ -28,7 +28,7 @@ ROUTES = {
             (13.416347, 55.826065),
             (13.411557, 55.824957)
         ],
-        "problem": (13.4234, 55.8191)
+        "problem": (13.4146, 55.8248)
     },
 
     "erik": {
@@ -39,7 +39,7 @@ ROUTES = {
             (13.421857, 55.812509),
             (13.419390, 55.815510)
         ],
-        "problem": (13.4276, 55.8212)
+        "problem": (13.4240, 55.8146)
     },
 
     "lisa": {
@@ -50,7 +50,7 @@ ROUTES = {
             (13.436283, 55.823717),
             (13.4245415, 55.823476)
         ],
-        "problem": (13.4202, 55.8171)
+        "problem": (13.4318, 55.8221)
     }
 }
 
@@ -207,6 +207,19 @@ def get_all_drones():
         drones[d["id"]] = d
 
     return jsonify(drones)
+
+
+@app.route("/get_area/<farmer>")
+def get_area(farmer):
+    if session.get("farmer") != farmer:
+        return jsonify({})
+
+    route = ROUTES[farmer]
+
+    return jsonify({
+        "area": route["area"],
+        "problem": route["problem"]
+    })
 
 
 if __name__ == "__main__":
