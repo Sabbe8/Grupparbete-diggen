@@ -66,6 +66,15 @@ body {
   color: #1f7a4d;
   box-shadow: 0 3px 10px rgba(0,0,0,0.15);
 }
+
+.base-station-icon {
+  width: 24px;
+  height: 24px;
+  background: #2c3e50;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px rgba(44, 62, 80, 0.25);
+}
 </style>
 </head>
 
@@ -92,6 +101,24 @@ var map = L.map('map').setView([55.81904, 13.42416], 15);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
 }).addTo(map);
+
+var baseIcon = L.divIcon({
+  html: '<div class="base-station-icon"></div>',
+  className: '',
+  iconSize: [30, 30],
+  iconAnchor: [15, 15]
+});
+
+L.circle([55.81904, 13.42416], {
+  radius: 45,
+  color: "#2c3e50",
+  fillColor: "#95a5a6",
+  fillOpacity: 0.20
+}).addTo(map);
+
+L.marker([55.81904, 13.42416], {
+  icon: baseIcon
+}).addTo(map).bindPopup("Base station");
 
 function loadFieldArea() {
   $.ajax({
