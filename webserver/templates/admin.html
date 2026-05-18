@@ -72,6 +72,43 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 var markers = {};
 
+function loadAllAreas() {
+  $.ajax({
+    url: '/get_all_areas',
+    dataType: 'json',
+
+    success: function(data) {
+
+      for (const user in data) {
+        var field = data[user];
+
+        var fieldCoords = field.area.map(function(point) {
+          return [point[1], point[0]];
+        });
+
+        L.polygon(fieldCoords, {
+          color: "#8b6b3f",
+          weight: 3,
+          fillColor: "#cbb58b",
+          fillOpacity: 0.35
+        }).addTo(map).bindPopup(user + "'s field");
+
+        if (field.problem) {
+          var problem = field.problem;
+
+          L.circleMarker([problem[1], problem[0]], {
+            radius: 8,
+            color: "red",
+            fillColor: "red",
+            fillOpacity: 0.95
+          }).addTo(map).bindPopup("Detected problem: " + user);
+        }
+      }
+    }
+  });
+}
+
+loadAllAreas();
 
 map.on('click', function(e) {
 
@@ -96,7 +133,6 @@ map.on('click', function(e) {
     });
 });
 
-
 function updateDrones() {
 
     $.ajax({
@@ -114,6 +150,8 @@ function updateDrones() {
                 let lat = parseFloat(d.latitude);
                 let lon = parseFloat(d.longitude);
 
+                if (isNaN(lat) || isNaN(lon)) continue;
+
                 let color = d.status === "idle" ? "#2ecc71" : "#e74c3c";
 
                 if (!markers[id]) {
@@ -125,13 +163,17 @@ function updateDrones() {
                     }).addTo(map);
                 } else {
                     markers[id].setLatLng([lat, lon]);
-                    markers[id].setStyle({color, fillColor: color});
+                    markers[id].setStyle({
+                        color: color,
+                        fillColor: color
+                    });
                 }
 
                 html += `
                     <div class="drone">
-                        <b>${id}</b><br>
-                        ${d.status}<br>
+                        <b>Drone ${id}</b><br>
+                        Status: ${d.status}<br>
+                        Owner: ${d.owner}<br>
                         ${lat.toFixed(4)}, ${lon.toFixed(4)}
                     </div>
                 `;

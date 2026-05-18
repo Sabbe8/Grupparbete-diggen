@@ -222,5 +222,21 @@ def get_area(farmer):
     })
 
 
+@app.route("/get_all_areas")
+def get_all_areas():
+    if not session.get("admin"):
+        return jsonify({})
+
+    areas = {}
+
+    for user, route in ROUTES.items():
+        areas[user] = {
+            "area": route["area"],
+            "problem": route["problem"]
+        }
+
+    return jsonify(areas)
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
